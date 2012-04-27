@@ -182,10 +182,6 @@ void read_sequence_timeout(int signalno)
 }
 
 typedef void (*sighandler_t)(int);
-
-
-
-
 // read_sequence is used to wait for a specific byte/character, ignoring other sequences
 // that arrive on the device. it stops when a timeout occurs or the buffer is filled.
 // detailed behavior:
@@ -203,11 +199,18 @@ typedef void (*sighandler_t)(int);
 // restored to its original state.
 int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size, long secs, long usecs)
 {
-	unsigned int seq_matched = 0, bytes_read = 0, i;
-	int res, retval = 0;
+	unsigned int seq_matched = 0;
+	unsigned int bytes_read = 0;
+	int i;
+	int res;
+	int retval = 0;
 
 	size_t seqbuf_size = count;
 	char* seqbuf = malloc(seqbuf_size);
+
+	printf("%s looking\n", __func__);
+	fprinthex(stdout, seq, seq_size);
+	printf("\n");
 
 	struct itimerval timer_value, old_timer_value;
 	sighandler_t old_sig_handler;
@@ -215,10 +218,10 @@ int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size, l
 	sts_serial_read_seq_timeout = 0;
 
 	// activate the timeout alarm -- a SIGALRM will be delievered in secs seconds + uscs microseconds.
-	if (secs > 0 || usecs > 0)
-	{
-		old_sig_handler = signal(SIGALRM,read_sequence_timeout); // Register the timeout handler, save the old one
-											   // XXX really should be using sigaction here..
+	if (secs > 0 || usecs > 0) {
+		// Register the timeout handler, save the old one
+		// XXX really should be using sigaction here..
+		old_sig_handler = signal(SIGALRM,read_sequence_timeout); 
 
 		timer_value.it_value.tv_sec = secs;
 		timer_value.it_value.tv_usec = usecs;
@@ -226,67 +229,64 @@ int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size, l
 		timer_value.it_interval.tv_usec = 0;
 		setitimer(ITIMER_REAL,&timer_value,&old_timer_value);
 	}
-	while(sts_serial_read_seq_timeout == 0)
-	{
+	while (sts_serial_read_seq_timeout == 0) {
 		// if the sequence has been matched
-		if (seq_matched == seq_size)
-		{
-			//printf("Sequence matched.\n");
+		if (seq_matched == seq_size) {
+			//printf("Sequence matched %lu.\n", seq_size);
 			// if count bytes have been read, stop and return.
-			if (bytes_read == count)
-			{
+			if (bytes_read == count) {
 				sts_serial_read_seq_timeout = 1;
 				break;
-			}
-			else{
-				//printf("Waiting for %d bytes.\n",count-bytes_read);
-				res = read(fd,buf+bytes_read,count-bytes_read);
+			} else {
+				//printf("Waiting for %lu bytes\n", count - bytes_read);
+				res = read(fd, buf+bytes_read, count-bytes_read);
+				if (res > 0) {
+					fprintf(stdout, "Read0 bytes %d bytes_read %u\t", res,
+						bytes_read);
+					fprinthex(stdout, buf+bytes_read, res);
+					fprintf(stdout, "\n");
+				}
 				if (res==0)
 					continue;
-				else if (res<0)
-				{
+				else if (res < 0) {
 					if (errno == EAGAIN)
 						continue;
-					printf(" read_sequence() call to read() failed: %s\n",strerror(errno));
+					printf(" read_sequence() call to read() failed: %s\n",
+					       strerror(errno));
 					retval=-1;
-				}
-				else bytes_read+=res;
+				} else
+					bytes_read += res;
 				continue;
 			}
-		}
-		else // if the sequence hasn't been matched...
-		{
-			
+		} else {
+			// if the sequence hasn't been matched...
 			res = read(fd, seqbuf, seqbuf_size);
-			if (res==0)
+			if (res > 0) {
+				fprintf(stdout, "Read1 bytes %d\t", res);
+				fprinthex(stdout, seqbuf, res);
+				fprintf(stdout, "\n");
+			}
+			if (res == 0)
 				continue;
-			else if (res<0)
-			{
+			else if (res < 0) {
 				if (errno == EAGAIN)
 					continue;
 				printf(" read_sequence() call to read() failed: %s\n",strerror(errno));
-				retval=-1;
-			}
-			//printf("Read %d bytes\n",res);
+				retval = -1;
 			// for each byte read
-			else for (i=0; i<res;i++)
-			{
+			} else for (i=0; i < res; i++) {
 				if (sts_serial_read_seq_timeout == 1)
 					break;
 				// if the byte matches the next byte of the sequence to match,
 				// or the sequence has been matched and there are bytes left in the buffer
-				else if (seqbuf[i]==seq[seq_matched] || (seq_matched == seq_size))
-				{
+				else if (seqbuf[i] == seq[seq_matched] || (seq_matched == seq_size)) {
 					// copy the byte into the buffer
 					((char *)buf)[bytes_read] = ((char*)seqbuf)[i];
 					bytes_read++; // increment the number of bytes written to buf
 					if (seq_matched<seq_size)
-					{
 						seq_matched++; // increment the number of seq bytes matched
-					}
-				}
-				else // otherwise the sequence didn't match...
-				{
+				} else {
+					// otherwise the sequence didn't match...
 					// .. reset the counts
 					seq_matched = 0;
 					bytes_read = 0;
@@ -295,19 +295,18 @@ int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size, l
 		} // if the sequence hasn't been matched...
 	}
 	// disable the timeout alarm
-	if (secs > 0 || usecs > 0)
-	{
+	if (secs > 0 || usecs > 0) {
 		signal(SIGALRM,old_sig_handler); // register the old timeout handler
-								// XXX really should be using sigaction here
+		// XXX really should be using sigaction here
 		setitimer(ITIMER_REAL,&old_timer_value,0); // restore the old timer
 	}
 	free(seqbuf);
 
 	if (retval == -1)
 		return retval;
-	else return bytes_read;
+	else 
+		return bytes_read;
 }
-
 
 // Attempts to set the baud rate to the closest rate possible to 
 // the desired_baudrate argument using divisors.
@@ -321,111 +320,86 @@ int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size, l
 //   I think tty_ioctl.c has to be compiled into the kernel with BOTHER defined for this to work.
 //   set cbaud to BOTHER and c_ospeed to the desired setting.
 //   This is done through a call to set_custom_baud_rate_no_ioctl()
-int set_custom_baud_rate(int fport, unsigned int desired_baudrate)
+int 
+set_custom_baud_rate(int fport, unsigned int desired_baudrate)
 {
 	unsigned int new_baudrate;
 	struct termios port_attrib;
 	struct serial_struct serial_info;
 	int divisor = 1;
-	
 
-	if (tcgetattr(fport, &port_attrib) < 0)
-	{
+	if (tcgetattr(fport, &port_attrib) < 0) {
 		printf(" tcgetattr() failed to get port settings.\n");
 		return -1;
 	}
-	if (ioctl(fport, TIOCGSERIAL, &serial_info) !=0)
-	{
+	if (ioctl(fport, TIOCGSERIAL, &serial_info) !=0) {
 		printf(" ioctl TIOCGSERIAL failed to get port settings: %s.\n",strerror(errno));
-		
 		return set_custom_baud_rate_no_ioctl(fport, desired_baudrate);
 	}
-
-
 	// set the baudrate to B38400 (custom baud setting)
-	
-	if (cfsetspeed(&port_attrib,B38400) < 0)
-	{	printf(" Call to cfsetspeed failed. Unable to set baud rate.\n");
+	if (cfsetspeed(&port_attrib,B38400) < 0) {
+		printf(" Call to cfsetspeed failed. Unable to set baud rate.\n");
 		return -1;
 	}
-
-	
 	// clear the serial line
 	tcflush(fport, TCIOFLUSH);
-
-
 	// XXX should make this round to nearest integer instead of
 	// just using integer division with drops the fractional component
-
 	// set the base baud rate if it is less than 115200, to 115200
 	if (serial_info.baud_base < 115200)
 		serial_info.baud_base = 115200;
-
 	divisor = serial_info.baud_base / desired_baudrate;
-
 	// set the custom divisor
 	serial_info.custom_divisor = divisor;
 	// set the ASYNC_SPD_CUST flag
 	serial_info.flags |= (ASYNC_SPD_MASK & ASYNC_SPD_CUST);
 	// apply the port settings (divisor and baud base)
-	if (ioctl(fport,TIOCSSERIAL,&serial_info) !=0)
-	{
+	if (ioctl(fport,TIOCSSERIAL,&serial_info) !=0) {
 		printf(" ioctl() TIOCSSERIAL failed to set custom baud rate: %s.\n",strerror(errno));
 		return set_custom_baud_rate_no_ioctl(fport, desired_baudrate);
 	}
 	// apply the port settings (baud rate)
-	if (tcsetattr(fport,TCSANOW,&port_attrib) < 0)
-	{
+	if (tcsetattr(fport,TCSANOW,&port_attrib) < 0) {
 		printf(" Failed to apply new port settings.\n");
 		return -1;
 	}	
-
 	// try to get the new termios port settings
-	if (tcgetattr(fport, &port_attrib) < 0)
-	{
+	if (tcgetattr(fport, &port_attrib) < 0) {
 		printf(" Failed to get new port settings.\n");
 		return -1;
 	}
 	// check the new baud rate
 	new_baudrate = cfgetospeed(&port_attrib);
-	if ((new_baudrate != B38400) && (new_baudrate != CBAUDEX))
-	{
+	if ((new_baudrate != B38400) && (new_baudrate != CBAUDEX)) {
 		printf(" Custom baud rate could not be set with tcsetattr.\n");
 		return -1;
 	}
-	
 	// try to get the new ioctl port settings
-	if (ioctl(fport, TIOCGSERIAL, &serial_info) !=0)
-	{
+	if (ioctl(fport, TIOCGSERIAL, &serial_info) !=0) {
 		printf(" ioctl TIOCGSERIAL failed to get new port settings.\n");
 		return set_custom_baud_rate_no_ioctl(fport, desired_baudrate);
 	}
 	// check the new baud rate and divisor
-	if (serial_info.custom_divisor!= divisor)
-	{
+	if (serial_info.custom_divisor!= divisor) {
 		printf(" Custom baud rate could not be set by ioctl.\n");
 		return set_custom_baud_rate_no_ioctl(fport, desired_baudrate);
 	}
 	new_baudrate = serial_info.baud_base/serial_info.custom_divisor;
-
 	printf(" Baud rate set to: %d. (%d was requested)\n",new_baudrate, desired_baudrate);
 	if (desired_baudrate != new_baudrate)
 		printf("  Exact baud rate could not be set due to hardware limitations.\n");
-
 	// clear the serial line
 	tcflush(fport, TCIOFLUSH);
-
 	return 0;
 }
-
-
 
 // Termios custom baud rate method:
 //   tty_ioctl.c has to be compiled into the kernel with BOTHER defined for this to work.
 //   This is called through set_custom_baud_rate() if a call to ioctl() fails
 //	 ... assuming BOTHER is defined. 
 // XXX this is an untested function (my architecture doesn't have BOTHER defined)
-int set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate)
+int
+set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate)
 {
 #ifndef BOTHER
 	return -1;
@@ -436,8 +410,7 @@ int set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate)
 	int divisor = 1;
 	
 
-	if (tcgetattr(fport, &port_attrib) < 0)
-	{
+	if (tcgetattr(fport, &port_attrib) < 0) {
 		printf(" tcgetattr() failed to get port settings.\n");
 		return -1;
 	}
@@ -452,22 +425,19 @@ int set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate)
 	tcflush(fport, TCIOFLUSH);
 
 	// apply the port settings (baud rate)
-	if (tcsetattr(fport,TCSANOW,&port_attrib) < 0)
-	{
+	if (tcsetattr(fport,TCSANOW,&port_attrib) < 0) {
 		printf(" Failed to apply new port settings.\n");
 		return -1;
 	}	
 
 	// try to get the new termios port settings
-	if (tcgetattr(fport, &port_attrib) < 0)
-	{
+	if (tcgetattr(fport, &port_attrib) < 0) {
 		printf(" Failed to get new port settings.\n");
 		return -1;
 	}
 	// check the new baud rate
 	new_baudrate = cfgetospeed(&port_attrib);
-	if (new_baudrate != desired_baudrate)
-	{
+	if (new_baudrate != desired_baudrate) {
 		printf(" Custom baud rate could not be set with tcsetattr.\n");
 		return -1;
 	}
@@ -479,81 +449,68 @@ int set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate)
 #endif
 }
 
-
-
 // attempts to connect to a serial device at portpath (i.e. "/dev/ttyUSB0")
 // sets raw mode and sets the baud rate to baudrate. (see `man termios`)
 // returns the file descriptor for the connection, or -1 if an error occurs.
-
 // note that this only supports baud rates defined in termios.
-int serial_connect(const char* portpath, int flags, speed_t baudrate)
+int
+serial_connect(const char* portpath, int flags, speed_t baudrate)
 {
 	speed_t new_baudrate;
 	struct termios port_attrib; // termios attributes struct
 	int fport = open(portpath,flags);
-	if (fport == -1)
-	{
+	if (fport == -1) {
 		printf("Unable to open %s.\n", portpath);
 		printf("Check that the device is plugged in and turned on.\n");
 		return -1;
 	}
-
 	// get the current port settings
-	if (tcgetattr(fport, &port_attrib) < 0)
-	{
+	if (tcgetattr(fport, &port_attrib) < 0) {
 		printf(" Failed to get port settings.\n");
 		close(fport);
 		return -1;
 	}
-
 	// set raw mode
-    cfmakeraw(&port_attrib);
-
+	cfmakeraw(&port_attrib);
 	// set the baud rate to baudrate
-	if (cfsetspeed(&port_attrib,baudrate) < 0)
-	{	printf(" Invalid baud rate specified or other baud rate error.\n");
+	if (cfsetspeed(&port_attrib,baudrate) < 0) {
+		printf(" Invalid baud rate specified or other baud rate error.\n");
 		close(fport);
-		return -1;}
-
+		return -1;
+	}
 	// clear the serial line
 	tcflush(fport, TCIOFLUSH);
 	// apply the port settings (baud rate and raw mode)
-	if (tcsetattr(fport,TCSANOW,&port_attrib) < 0)
-	{
+	if (tcsetattr(fport,TCSANOW,&port_attrib) < 0) {
 		printf(" Failed to apply new port settings.\n");
 		close(fport);
 		return -1;
 	}	
-
 	// try to get the new port settings
-	if (tcgetattr(fport, &port_attrib) < 0)
-	{
+	if (tcgetattr(fport, &port_attrib) < 0) {
 		printf(" Failed to get port settings.\n");
 		close(fport);
 		return -1;
 	}
-
 	// print the new baud rate
 	new_baudrate = cfgetospeed(&port_attrib);
 	if (new_baudrate == baudrate)
 		printf(" Port opened at baud rate: %d.\n",convert_baudrate(baudrate));
-	else
-	{
+	else {
 		printf("Couldn't set baud rate.\n");
 		close(fport);
 		return -1;
 	}
-
 	return fport;
 }
 
 // returns the speed_t baudrate defined in <termios.h> in unsigned integer format
 // e.g. convert_baudrate(B57600) returns 57600. on unrecognized baudrate, returns 0.
-unsigned int convert_baudrate(speed_t baudrate)
+unsigned int
+convert_baudrate(speed_t baudrate)
 {
 	unsigned int res;
-	switch (baudrate)
-	{
+	switch (baudrate) {
 		case B0 :  res = 0; break;
 		case B50 :  res = 50; break;
 		case B75 :  res = 75; break;
@@ -579,21 +536,20 @@ unsigned int convert_baudrate(speed_t baudrate)
 	return res;
 }
 
-
 // print hex sequence of len bytes from char array seq.
 // converts the numerical value of each byte in seq to a 
 // hex character string and prints it to stream.
 // hexadecimal bytes are each seperated by spaces.
 // there is no trailing space.
-void fprinthex(FILE *stream, char *seq, unsigned int seq_len)
+void
+fprinthex(FILE *stream, char *seq, unsigned int seq_len)
 {
 	unsigned int i;
 	char hexbuf[3];
-	for (i=0; i<seq_len; i++)
-	{
+	for (i=0; i < seq_len; i++) {
 		char_to_hexstr(seq[i],hexbuf,3);
 		fprintf(stream,"%s",hexbuf);
-		if (i<(seq_len-1))
+		if (i < (seq_len-1))
 			fprintf(stream," ");
 	}
 }
@@ -608,30 +564,29 @@ void fprinthex(FILE *stream, char *seq, unsigned int seq_len)
 // error message and return.
 // integer conversion: buf must be 9 bytes long
 
-void char_to_hexstr(char val, char* buf, unsigned int len)
+void
+char_to_hexstr(char val, char* buf, unsigned int len)
 {
 	unsigned char value = (unsigned) val;
 	char hex_char[] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 
-	if (len < 3)
-	{
+	if (len < 3) {
 		fprintf(stderr,"Buffer not large enough for hex conversion.\n");
 		return;
 	}
 	buf[1] = hex_char[value%16];
 	buf[0] = hex_char[(value>>4)%16];
 	buf[2] = '\0';
-	
 }
 
-void int_to_hexstr(int val, char* buf, unsigned int len)
+void
+int_to_hexstr(int val, char* buf, unsigned int len)
 {
 	unsigned int value = (unsigned) val;
 	char hex_char[] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 	int i=0;
 
-	if (len < 9)
-	{
+	if (len < 9) {
 		fprintf(stderr,"Buffer not large enough for hex conversion.\n");
 		return;
 	}

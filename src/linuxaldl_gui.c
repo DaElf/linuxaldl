@@ -1,6 +1,3 @@
-
-
-
 /*(C) copyright 2008, Steven Snyder, All Rights Reserved
 
 Steven T. Snyder, <stsnyder@ucla.edu> http://www.steventsnyder.com
@@ -20,7 +17,6 @@ LICENSING INFORMATION:
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -34,7 +30,6 @@ LICENSING INFORMATION:
 #include "linuxaldl_gui.h"
 #include "linuxaldl.h"
 #include "sts_serial.h"
-
 
 // global variable which holds the current definition pointer, file descriptors, etc
 extern linuxaldl_settings aldl_settings;
@@ -50,7 +45,8 @@ linuxaldl_gui_settings aldl_gui_settings = { NULL, {0,0}, ALDL_LOG_RAW, NULL, 0}
 
 
 // runs the linuxaldl GTK+ graphical user interface
-int linuxaldl_gui(int argc, char* argv[])
+int
+linuxaldl_gui(int argc, char* argv[])
 {
 	// ================================================================
 	//				MAIN GUI INTIIALIZATION 
@@ -101,25 +97,25 @@ int linuxaldl_gui(int argc, char* argv[])
 	gtk_window_set_position(GTK_WINDOW (lfilew), GTK_WIN_POS_CENTER);
 	g_signal_connect(G_OBJECT (lfilew), "destroy", G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (lfilew)->ok_button), "clicked", 
-										G_CALLBACK (linuxaldl_gui_load), (gpointer) lfilew);
+			 G_CALLBACK (linuxaldl_gui_load), (gpointer) lfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (lfilew)->ok_button), "clicked", 
-										G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
+			 G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (lfilew)->cancel_button), "clicked",
-										G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
+			 G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
 	// stop the window from being destroyed when the X is clicked at the top right
 	g_signal_connect(G_OBJECT(lfilew),"delete_event", G_CALLBACK (hide_on_delete), NULL);
-										
+	
 	// Save File selection dialogue
 	// ========================================================================
 	sfilew = gtk_file_selection_new("Select .log file to write to");
 	gtk_window_set_position(GTK_WINDOW (sfilew), GTK_WIN_POS_CENTER);
 	g_signal_connect(G_OBJECT (sfilew), "destroy", G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (sfilew)->ok_button), "clicked", 
-										G_CALLBACK (linuxaldl_gui_save), (gpointer) sfilew);
+			 G_CALLBACK (linuxaldl_gui_save), (gpointer) sfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (sfilew)->ok_button), "clicked", 
-										G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
+			 G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (sfilew)->cancel_button), "clicked",
-										G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
+			 G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
 	// stop the window from being destroyed when the X is clicked at the top right
 	g_signal_connect(G_OBJECT(sfilew),"delete_event", G_CALLBACK (hide_on_delete), NULL);
 	
@@ -189,24 +185,24 @@ int linuxaldl_gui(int argc, char* argv[])
 	// load .log file button
 	button = gtk_button_new_with_label("Load .log (playback)");
 	g_signal_connect(G_OBJECT(button), "clicked",
-					G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) lfilew);
+			 G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) lfilew);
 	gtk_container_add(GTK_CONTAINER (bbox_settings_top), button);
 	gtk_widget_show(button);
 	
 	// save .log file button
 	button = gtk_button_new_with_label("Select .log (to record)");
 	g_signal_connect(G_OBJECT(button), "clicked",
-					G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) sfilew);
+			 G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) sfilew);
 	gtk_container_add(GTK_CONTAINER (bbox_settings_top), button);
 	gtk_widget_show(button);
 	
 	// select definition
 	button = gtk_button_new_with_label("Select definition");
 	g_signal_connect(G_OBJECT(button), "clicked",
-					G_CALLBACK(linuxaldl_gui_try_choosedef), (gpointer) choosedefw);
+			 G_CALLBACK(linuxaldl_gui_try_choosedef), (gpointer) choosedefw);
 	gtk_container_add(GTK_CONTAINER (bbox_settings_top), button);
 	gtk_widget_show(button);
-
+	
 	// ----------------------------------------------------------------
 	// ALDL Data Access frame
 	// ----------------------------------------------------------------
@@ -218,7 +214,7 @@ int linuxaldl_gui(int argc, char* argv[])
 	// select definition
 	button = gtk_button_new_with_label("Show Data Readout");
 	g_signal_connect(G_OBJECT(button), "clicked",
-					G_CALLBACK(linuxaldl_gui_datareadout_show), (gpointer) datareadoutw);
+			 G_CALLBACK(linuxaldl_gui_datareadout_show), (gpointer) datareadoutw);
 	gtk_container_add(GTK_CONTAINER (frame_data_control), button);
 	gtk_widget_show(button);
 
@@ -282,61 +278,76 @@ static gboolean hide_on_delete( GtkWidget *widget, GdkEvent *event, gpointer dat
 // timeout/ scan interval constraints (interval must be at least 20msec more than timeout).
 // otherwise it reassigns the scan interval to the new value immediately.
 // adj must point to the GtkAdjustment for the scan interval.
-static void linuxaldl_gui_scan_interval_changed( GtkAdjustment *adj, gpointer data)
+static void
+linuxaldl_gui_scan_interval_changed( GtkAdjustment *adj, gpointer data)
 {
 	unsigned int new_interval = gtk_adjustment_get_value(GTK_ADJUSTMENT(adj));
 
-	if (new_interval <= aldl_settings.scan_timeout+19)
-	{
+	if (new_interval <= aldl_settings.scan_timeout+19) {
 		new_interval = 20 + aldl_settings.scan_timeout;
 		gtk_adjustment_set_value(GTK_ADJUSTMENT(adj),new_interval);
 	}
 
 	aldl_settings.scan_interval = new_interval;
-
-
-	if (aldl_settings.scanning == 1)
-	{
+	
+	
+	if (aldl_settings.scanning == 1) {
 		g_source_remove(aldl_gui_settings.scanning_tag);
-
 		aldl_gui_settings.scanning_tag = g_timeout_add(aldl_settings.scan_interval,
-															linuxaldl_gui_scan_on_interval,
-															NULL);
+							       linuxaldl_gui_scan_on_interval,
+							       NULL);
 	}
 }
 
 // callback for change in the adjustment for the aldl_settings.scan_timeout field.
 // stores the new values and enforces timeout/ scan interval constraints (interval
 // must be at least 20msec more than timeout).
-static void linuxaldl_gui_scan_timeout_changed( GtkAdjustment *adj, gpointer data)
+static void
+linuxaldl_gui_scan_timeout_changed(GtkAdjustment *adj, gpointer data)
 {
 	unsigned int new_timeout = gtk_adjustment_get_value(GTK_ADJUSTMENT(adj));
 
-	if (new_timeout+19 >= aldl_settings.scan_interval)
-	{
+	if (new_timeout+19 >= aldl_settings.scan_interval) {
 		new_timeout = aldl_settings.scan_interval-20;
 		gtk_adjustment_set_value(GTK_ADJUSTMENT(adj),new_timeout);
 	}
-	
 	aldl_settings.scan_timeout = new_timeout;
 }
 
 // callback for g_timeout interval timer. if aldl_settings.scanning == 1 
 // then this function will call linuxaldl_gui_scan
-gint linuxaldl_gui_scan_on_interval(gpointer data)
+gint
+linuxaldl_gui_scan_on_interval(gpointer data)
 {
- 	if (aldl_settings.scanning == 0)
-	{
-		send_aldl_message(_ALDL_MESSAGE_MODE9); // send a mode 9 message to allow the ecm to resume normal mode
-		return 0; // returning 0 tells GTK to turn off the interval timer for this function
+ 	if (aldl_settings.scanning == 0) { 
+		// send a mode 9 message to allow the ecm to resume normal mode
+		printf("%s sending mode9 message\n", __func__);
+		send_aldl_message(aldl_settings.definition->mode9_request,
+				  aldl_settings.definition->mode9_request_length);
+		// returning 0 tells GTK to turn off the interval timer for this function
+		return 0; 
 	}
+	//printf("%s skip scan for now\n", __func__);
 	linuxaldl_gui_scan(NULL, NULL); // perform a scan operation
 	return 1;
 }
 
+static void
+linux_aldl_start_chatter(void)
+{
+	// send a mode 8 message to silence the ecm
+	send_aldl_message(aldl_settings.definition->mode8_request,
+			  aldl_settings.definition->mode8_request_length);
+	tcflush(aldl_settings.faldl,TCIOFLUSH); // flush send and receive buffers
+	
+	send_aldl_message(aldl_settings.definition->mode1_request,
+			  aldl_settings.definition->mode1_request_length); 
+}
+
 // perform a single scan operation: attempt to get one mode1 message,
 // save the data to the log and update the current data array
-static void linuxaldl_gui_scan( GtkWidget *widget, gpointer data)
+static void
+linuxaldl_gui_scan( GtkWidget *widget, gpointer data)
 {
 	int res;
 	char* inbuffer;
@@ -344,28 +355,29 @@ static void linuxaldl_gui_scan( GtkWidget *widget, gpointer data)
 	buf_size = aldl_settings.definition->mode1_response_length;
 
 	inbuffer = g_malloc(buf_size);
-	
-	// send a mode 8 message to silence the ecm
-	send_aldl_message(_ALDL_MESSAGE_MODE8);
-	tcflush(aldl_settings.faldl,TCIOFLUSH); // flush send and receive buffers
 
+#if 0	
+	// send a mode 8 message to silence the ecm
+	//send_aldl_message(_ALDL_MESSAGE_MODE8);
+	send_aldl_message(aldl_settings.definition->mode8_request,
+			  aldl_settings.definition->mode8_request_length);
+	tcflush(aldl_settings.faldl,TCIOFLUSH); // flush send and receive buffers
+#endif
+
+	linux_aldl_start_chatter();
 	// request a mode 1 message
 	res = get_mode1_message(inbuffer, buf_size);
 #ifdef _LINXUALDL_DEBUG
-	if (res==-1)
-	{
+	if (res == -1) {
 		// bad checksum
 		fprintf(stderr,"c");
-	}
-	else if (res==0)
-	{
+	} else if (res == 0) {
 		// timeout/partial response
 		fprintf(stderr,"t");
 	}
 #endif
 
-	if (res>0)
-	{
+	if (res > 0) {
 #ifdef _LINXUALDL_DEBUG
 		// got full mode1 message
 		fprintf(stderr,"+");
@@ -373,18 +385,14 @@ static void linuxaldl_gui_scan( GtkWidget *widget, gpointer data)
 		// update the timestamp
 		gettimeofday(&aldl_gui_settings.data_timestamp, NULL);
 
-
 		// check to see if a data set for the display has been allocated
-		if (aldl_settings.data_set_raw == NULL)
-		{
+		if (aldl_settings.data_set_raw == NULL) {
 			g_warning("Data set labels not initialized. Display and .csv log files will not be updated. \n");
-		}
-		else
-		{
+		} else {
 			// copy the data to the current data set
-			memcpy(	  aldl_settings.data_set_raw,
-					  inbuffer + aldl_settings.definition->mode1_data_offset,
-					  aldl_settings.definition->mode1_data_length);
+			memcpy(aldl_settings.data_set_raw,
+			       inbuffer + aldl_settings.definition->mode1_data_offset,
+			       aldl_settings.definition->mode1_data_length);
 
 			// update string and float representations
 			aldl_update_sets(ALDL_UPDATE_FLOATS|ALDL_UPDATE_STRINGS);
@@ -392,35 +400,36 @@ static void linuxaldl_gui_scan( GtkWidget *widget, gpointer data)
 			// update the Data Readout
 			linuxaldl_gui_datareadout_update(NULL,NULL);
 		}
-
 		// if a log file has been selected
-		if (aldl_settings.flogfile!=1)
-		{
+		if (aldl_settings.flogfile!=1) {
 			// ALDL_LOG_RAW
 			// ============
 			// raw format just dumps the timestamp and entire mode1 message to a file
-			if (aldl_gui_settings.log_format == ALDL_LOG_RAW)
-			{
+			if (aldl_gui_settings.log_format == ALDL_LOG_RAW) {
 				// note: this writes the integer timestamp using the endianness of the platform this
 				// process is running on. this means if the log file is read back using a platform
 				// with a different endianness, the timestamps will be incorrect.
 				// x86 platforms are little-endian.
 
 				// write the seconds to the file
-				write(aldl_settings.flogfile,(char*)(&aldl_gui_settings.data_timestamp.tv_sec),sizeof(time_t));
+				write(aldl_settings.flogfile,
+				      (char*)(&aldl_gui_settings.data_timestamp.tv_sec),
+				      sizeof(time_t));
 
 				// write the microseconds to the file
-				write(aldl_settings.flogfile,(char*)(&aldl_gui_settings.data_timestamp.tv_usec),sizeof(suseconds_t));
-
+				write(aldl_settings.flogfile,
+				      (char*)(&aldl_gui_settings.data_timestamp.tv_usec),
+				      sizeof(suseconds_t));
+				
 				// write the data to the file
 				write(aldl_settings.flogfile,inbuffer,res);
-				//g_print("%d bytes written to file/output.",res);
-			}
-			// ALDL_LOG_CSV
-			// ============
-			// CSV format conforming to RFC4180 http://tools.ietf.org/html/rfc4180
-			else if (aldl_gui_settings.log_format == ALDL_LOG_CSV)
+				g_print("%d bytes written to file/output.",res);
+			} else if (aldl_gui_settings.log_format == ALDL_LOG_CSV) {
+				// ALDL_LOG_CSV
+				// ============
+				// CSV format conforming to RFC4180 http://tools.ietf.org/html/rfc4180
 				linuxaldl_gui_write_csv_line();
+			}
 		}
 
 	}
@@ -429,32 +438,29 @@ static void linuxaldl_gui_scan( GtkWidget *widget, gpointer data)
 }
 
 // this function is called when the scan button is toggled
-static void linuxaldl_gui_scan_toggle( GtkWidget *widget, gpointer data)
+static void
+linuxaldl_gui_scan_toggle( GtkWidget *widget, gpointer data)
 {
 	struct itimerval timer_value;
-
-	// if the button is down
-    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) 
-    {
+	
+	// if the button is down"
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
 		// abort if no definition file selected, and toggle the button to off
-        if (aldl_settings.definition == NULL)
-		{
+		if (aldl_settings.definition == NULL) {
 			g_print("Scan aborted -- No definition file selected.\n");
 			gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widget),FALSE);
 			return;
 		}
-		if (aldl_settings.scanning == 0)
-		{
+		if (aldl_settings.scanning == 0) {
 			g_print("Starting scan.\n");
 			aldl_gui_settings.scanning_tag = g_timeout_add(aldl_settings.scan_interval,
-															linuxaldl_gui_scan_on_interval,
-															NULL);
+								       linuxaldl_gui_scan_on_interval,
+								       NULL);
 			aldl_settings.scanning = 1;
-
+			printf("%s do one scan\n", __func__);
 			linuxaldl_gui_scan(NULL,NULL); // perform initial scan
 		}
-    } 
-	else 	{
+	} else {
 		// button is up (turned off)
 		g_print("Stopping scan.\n");
 		aldl_settings.scanning = 0; // reset scan flag	
@@ -469,7 +475,9 @@ static void linuxaldl_gui_scan_toggle( GtkWidget *widget, gpointer data)
 // this function is called as the result of the "ok" button being
 // selected in the load log file selection dialogue.
 // XXX not implemented
-static void linuxaldl_gui_load( GtkWidget *widget, GtkFileSelection *fs){
+static void
+linuxaldl_gui_load( GtkWidget *widget, GtkFileSelection *fs)
+{
 	g_warning("Log viewing module is not yet implemented.\n");
 	return;
 }
@@ -481,7 +489,9 @@ static void linuxaldl_gui_load( GtkWidget *widget, GtkFileSelection *fs){
 // this function is called as the result of the "ok" button being
 // selected in the save log file selection dialogue. it saves 
 // the current buffer into the selected file.
-static void linuxaldl_gui_save( GtkWidget *widget, GtkFileSelection *fs){
+static void
+linuxaldl_gui_save( GtkWidget *widget, GtkFileSelection *fs)
+{
 	int i, length, res;
 	char extension[4];
 	const char* logfilename = gtk_file_selection_get_filename(fs);
@@ -490,24 +500,21 @@ static void linuxaldl_gui_save( GtkWidget *widget, GtkFileSelection *fs){
 	// Open the .log file for write, create if it doesnt exist
 	// ------------------------------------------------------------
 	aldl_settings.flogfile = open(logfilename,O_RDWR | O_CREAT, 0666);
-	if (aldl_settings.flogfile == -1)
-	{
+	if (aldl_settings.flogfile == -1) {
 		g_print("Unable to open/create %s for writing.\n",logfilename);
-		return;	}
+		return;
+	}
 	
 	g_print("Log file %s opened. ALDL data will be written to this file as it is received.\n",logfilename);
-
-
 	// Get the file extension to determine what format to use
 	// ----------------------------------------------------------
 
 	// count how many characters are in the filename
-	for (length=0; logfilename[length]!=0; length++)
- 	{ /* do nothing */ }
-	
+	for (length=0; logfilename[length]!=0; length++) {
+		/* do nothing */
+	}
 
-	if (length<5)
-	{
+	if (length < 5) {
 		// too short for an extension
 		// use raw format.
 		aldl_gui_settings.log_format = ALDL_LOG_RAW;
@@ -518,23 +525,17 @@ static void linuxaldl_gui_save( GtkWidget *widget, GtkFileSelection *fs){
 	memcpy(extension,logfilename+length-4,4);
 
 	// .csv or .CSV extension
-	if (0 == strncmp(".csv",extension,4) || 0 == strncmp(".CSV",extension,4))
-	{
+	if (0 == strncmp(".csv",extension,4) || 0 == strncmp(".CSV",extension,4)) {
 		aldl_gui_settings.log_format = ALDL_LOG_CSV;
-
 		aldl_gui_settings.slogfile = fdopen(aldl_settings.flogfile,"a+");
-
-
 		// if no definition is loaded yet, the definition loader has to write the header line.
-
 		// if no definition file selected, dont try to generate the header labels yet.
-        if (aldl_settings.definition == NULL)
+		if (aldl_settings.definition == NULL)
 			g_warning(".csv format selected but no definition has been loaded.\n");
 		else
 			linuxaldl_gui_write_csv_header();
 
 	}
-
 	return;
 }
 
@@ -544,17 +545,16 @@ static void linuxaldl_gui_save( GtkWidget *widget, GtkFileSelection *fs){
 // =======================
 
 // write the header line to the csv file
-static void linuxaldl_gui_write_csv_header()
+static void
+linuxaldl_gui_write_csv_header()
 {
 	int i;
 
-	if (aldl_gui_settings.slogfile==NULL)
-	{
+	if (aldl_gui_settings.slogfile==NULL) {
 		g_warning("linuxaldl_gui_write_csv_header() invoked but no CSV file stream opened.\n");
 		return;
 	}
-	if (aldl_settings.definition == NULL)
-	{
+	if (aldl_settings.definition == NULL) {
 		g_warning("Definition file not selected. .CSV header line could not be written.\n");
 		return;
 	}
@@ -565,8 +565,7 @@ static void linuxaldl_gui_write_csv_header()
 	fprintf(aldl_gui_settings.slogfile,"Timestamp");
 
 	// until at the end of the items in the definition
-	for (i=0; def[i].label!=NULL; i++)
-	{
+	for (i=0; def[i].label!=NULL; i++) {
 		if (def[i].operation!=ALDL_OP_SEPERATOR)
 			fprintf(aldl_gui_settings.slogfile,",%s",def[i].label);
 	}
@@ -575,36 +574,28 @@ static void linuxaldl_gui_write_csv_header()
 
 
 // write a data line for the csv file
-static void linuxaldl_gui_write_csv_line()
+static void
+linuxaldl_gui_write_csv_line()
 {
 	int i;
-
-	if (aldl_gui_settings.log_format != ALDL_LOG_CSV)
-	{
+	if (aldl_gui_settings.log_format != ALDL_LOG_CSV) {
 		g_warning("linuxaldl_gui_write_csv_line() invoked but CSV format not selected.\n");
 		return;
-	}
-	else if (aldl_gui_settings.slogfile==NULL)
-	{
+	} else if (aldl_gui_settings.slogfile==NULL) {
 		g_warning("linuxaldl_gui_write_csv_line() invoked but no CSV file stream opened.\n");
 		return;
-	}
-	else if (aldl_settings.definition == NULL)
-	{
+	} else if (aldl_settings.definition == NULL) {
 		g_warning("Definition file not selected. .CSV data line could not be written.\n");
 		return;
-	}
-	else if (aldl_settings.data_set_strings!= NULL)
-	{
+	} else if (aldl_settings.data_set_strings!= NULL) {
 		byte_def_t* def = aldl_settings.definition->mode1_def;
 
 		// write the timestamp
 		fprintf(aldl_gui_settings.slogfile,"%d+%f", (int)aldl_gui_settings.data_timestamp.tv_sec,
-											(float)aldl_gui_settings.data_timestamp.tv_usec/1000000.0);
+			(float)aldl_gui_settings.data_timestamp.tv_usec/1000000.0);
 
 		// until at the end of the items in the definition...
-		for (i=0; def[i].label!=NULL; i++)
-		{
+		for (i=0; def[i].label!=NULL; i++) {
 			// if the item is not a seperator, write the string
 			if (def[i].operation != ALDL_OP_SEPERATOR)
 				fprintf(aldl_gui_settings.slogfile,",%s",aldl_settings.data_set_strings[i]);
@@ -658,21 +649,21 @@ GtkWidget* linuxaldl_gui_options_new()
 
 	// scan interval adjustment
 	GtkWidget* interval_adj = hscale_new_with_label(aldl_settings.scan_interval,
-														50.0, 300.0, 1.0,
-									G_CALLBACK(linuxaldl_gui_scan_interval_changed),
-									"Scan Interval (msec)");
-
+							50.0, 1000.0, 1.0,
+							G_CALLBACK(linuxaldl_gui_scan_interval_changed),
+							"Scan Interval (msec)");
+	
 
 	gtk_box_pack_start(GTK_BOX(vbox_options),interval_adj,FALSE,FALSE,0);
 	gtk_widget_show(interval_adj);
 	
-
+	
 	// timeout adjustment
 	GtkWidget* timeout_adj = hscale_new_with_label(aldl_settings.scan_timeout,
-													50.0,300.0, 1.0,
-									G_CALLBACK(linuxaldl_gui_scan_timeout_changed),
-									"Scan Timeout (msec)");
-
+						       50.0, 1000.0, 1.0,
+						       G_CALLBACK(linuxaldl_gui_scan_timeout_changed),
+						       "Scan Timeout (msec)");
+	
 	gtk_box_pack_start(GTK_BOX(vbox_options),timeout_adj,FALSE,FALSE,0);
 	gtk_widget_show(timeout_adj);
 
