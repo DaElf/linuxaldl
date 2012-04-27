@@ -49,7 +49,8 @@ linuxaldl_settings aldl_settings =
 //
 // ============================================================================
 
-int main(int argc, const char *argv[])
+int
+main(int argc, const char *argv[])
 {
 	int res;		// temporary storage for function results
 
@@ -218,14 +219,16 @@ int main(int argc, const char *argv[])
 // This function should check that the aldl interface is working by listening
 // for ECM chatter, or some other operation to determine whether there is
 // a line connected to the serial port.
-int verifyaldl()
+int
+verifyaldl()
 {
 	//XXX NOT IMPLEMENTED
 	return 0;
 
 }
 
-int aldl_scan_and_log(int fd)
+int
+aldl_scan_and_log(int fd)
 {
 	//XXX NOT IMPLEMENTED
 	return 0;
@@ -239,7 +242,8 @@ int aldl_scan_and_log(int fd)
 // which use the mode 8 and mode 9 message definitions from the
 // current aldl definition.
 // returns 0 on success.
-int send_aldl_message(char *msg_buf, unsigned int size)
+int
+send_aldl_message(char *msg_buf, unsigned int size)
 {
 	int res;
 
@@ -268,7 +272,8 @@ int send_aldl_message(char *msg_buf, unsigned int size)
 // will in all probability return part of a normal mode message. a correct
 // implementation should wait for a mode 1 message header in the response,
 // so that mode 8 isn't even required.
-int get_mode1_message(char *inbuffer, unsigned int size)
+int
+get_mode1_message(char *inbuffer, unsigned int size)
 {
 	int res;
 	char checkval;
@@ -332,7 +337,8 @@ int get_mode1_message(char *inbuffer, unsigned int size)
 // listens for a maximum of timeout seconds.
 // returns -1 on failure, 0 on timeout with no bytes received,
 // and otherwise returns the number of bytes received 
-int aldl_listen_raw(char *inbuffer, unsigned int len, int timeout)
+int
+aldl_listen_raw(char *inbuffer, unsigned int len, int timeout)
 {
 	int res;
 	res = readwithtimeout(aldl_settings.faldl, inbuffer, len, timeout);
@@ -342,7 +348,8 @@ int aldl_listen_raw(char *inbuffer, unsigned int len, int timeout)
 // calculates the single-byte checksum, summing from the start of buffer
 // through len bytes. the checksum is calculated by adding each byte
 // together and ignoring overflow, then taking the two's complement and adding 1
-char get_checksum(char *buffer, unsigned int len)
+char
+get_checksum(char *buffer, unsigned int len)
 {
 	char acc = 0x00;
 
@@ -363,7 +370,8 @@ char get_checksum(char *buffer, unsigned int len)
 // looks up def_name in the aldl_definition_table until it finds the first 
 // definition in the table with the name def_name
 // if the definition is not in the table, returns NULL
-aldl_definition *aldl_get_definition(const char *defname)
+aldl_definition *
+aldl_get_definition(const char *defname)
 {
 	int index = 0;
 	aldl_definition *result = aldl_definition_table[0];
@@ -385,7 +393,8 @@ aldl_definition *aldl_get_definition(const char *defname)
 // if flags is ALDL_UPDATE_FLOATS|ALDL_UPDATE_STRINGS, then both will be updated.
 // if the aldl_settings.data_set_floats or aldl_settings.data_set_strings arrays have
 // not yet been initialized (e.g. are NULL pointers) then they will not be modified.
-void aldl_update_sets(int flags)
+void
+aldl_update_sets(int flags)
 {
 	unsigned int i = 0;
 	byte_def_t *defs = aldl_settings.definition->mode1_def;
@@ -450,8 +459,9 @@ void aldl_update_sets(int flags)
 // converts the raw 8-bit data value val into a float by performing operation
 // using op_factor and op_offset.
 // see the documentation for the byte_def_t struct in linuxaldl.h for more information
-float aldl_raw8_to_float(unsigned char val, int operation, float op_factor,
-			 float op_offset)
+float
+aldl_raw8_to_float(unsigned char val, int operation, float op_factor,
+		   float op_offset)
 {
 	float result = val;
 	if (operation == ALDL_OP_MULTIPLY)
@@ -472,8 +482,9 @@ float aldl_raw8_to_float(unsigned char val, int operation, float op_factor,
 // converts the raw 16-bit data value val into a float by performing operation
 // using op_factor and op_offset.
 // see the documentation for the byte_def_t struct in linuxaldl.h for more information
-float aldl_raw16_to_float(unsigned char msb, unsigned char lsb, int operation,
-			  float op_factor, float op_offset)
+float
+aldl_raw16_to_float(unsigned char msb, unsigned char lsb, int operation,
+		    float op_factor, float op_offset)
 {
 	float result = ((float)msb * 256) + (float)lsb;
 	if (operation == ALDL_OP_MULTIPLY)

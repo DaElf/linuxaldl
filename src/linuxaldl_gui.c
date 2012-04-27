@@ -46,7 +46,8 @@ linuxaldl_gui_settings aldl_gui_settings =
 // ========================================================================
 
 // runs the linuxaldl GTK+ graphical user interface
-int linuxaldl_gui(int argc, char *argv[])
+int
+linuxaldl_gui(int argc, char *argv[])
 {
 	// ================================================================
 	//                              MAIN GUI INTIIALIZATION 
@@ -253,13 +254,15 @@ int linuxaldl_gui(int argc, char *argv[])
 // ==================================
 
 // calls gtk_widget_show on the widget specified in the data argument
-static void linuxaldl_gui_widgetshow(GtkWidget * widget, gpointer data)
+static void
+linuxaldl_gui_widgetshow(GtkWidget * widget, gpointer data)
 {
 	gtk_widget_show(GTK_WIDGET(data));
 }
 
 // calls gtk_widget_hide on the widget specified in the data argument
-static void linuxaldl_gui_widgethide(GtkWidget * widget, gpointer data)
+static void
+linuxaldl_gui_widgethide(GtkWidget * widget, gpointer data)
 {
 	gtk_widget_hide(GTK_WIDGET(data));
 }
@@ -272,8 +275,8 @@ static void linuxaldl_gui_widgethide(GtkWidget * widget, gpointer data)
 // called on delete_event, closes the connection (if there is one)
 // and call gtk_main_quit(). if a transfer is currently in progress,
 // should pop up a dialogue to confirm quitting.
-static gboolean linuxaldl_gui_quit(GtkWidget * widget, GdkEvent * event,
-				   gpointer data)
+static gboolean
+linuxaldl_gui_quit(GtkWidget * widget, GdkEvent * event, gpointer data)
 {
 	gtk_main_quit();
 	g_free(aldl_gui_settings.data_readout_labels);
@@ -284,8 +287,8 @@ static gboolean linuxaldl_gui_quit(GtkWidget * widget, GdkEvent * event,
 }
 
 // returns TRUE so that a window is not destroyed on a delete event
-static gboolean hide_on_delete(GtkWidget * widget, GdkEvent * event,
-			       gpointer data)
+static gboolean
+hide_on_delete(GtkWidget * widget, GdkEvent * event, gpointer data)
 {
 	linuxaldl_gui_widgethide(widget, widget);
 	return TRUE;
@@ -300,8 +303,8 @@ static gboolean hide_on_delete(GtkWidget * widget, GdkEvent * event,
 // timeout/ scan interval constraints (interval must be at least 20msec more than timeout).
 // otherwise it reassigns the scan interval to the new value immediately.
 // adj must point to the GtkAdjustment for the scan interval.
-static void linuxaldl_gui_scan_interval_changed(GtkAdjustment * adj,
-						gpointer data)
+static void
+linuxaldl_gui_scan_interval_changed(GtkAdjustment * adj, gpointer data)
 {
 	unsigned int new_interval =
 	    gtk_adjustment_get_value(GTK_ADJUSTMENT(adj));
@@ -325,8 +328,8 @@ static void linuxaldl_gui_scan_interval_changed(GtkAdjustment * adj,
 // callback for change in the adjustment for the aldl_settings.scan_timeout field.
 // stores the new values and enforces timeout/ scan interval constraints (interval
 // must be at least 20msec more than timeout).
-static void linuxaldl_gui_scan_timeout_changed(GtkAdjustment * adj,
-					       gpointer data)
+static void
+linuxaldl_gui_scan_timeout_changed(GtkAdjustment * adj, gpointer data)
 {
 	unsigned int new_timeout =
 	    gtk_adjustment_get_value(GTK_ADJUSTMENT(adj));
@@ -341,7 +344,8 @@ static void linuxaldl_gui_scan_timeout_changed(GtkAdjustment * adj,
 
 // callback for g_timeout interval timer. if aldl_settings.scanning == 1 
 // then this function will call linuxaldl_gui_scan
-gint linuxaldl_gui_scan_on_interval(gpointer data)
+gint
+linuxaldl_gui_scan_on_interval(gpointer data)
 {
 	if (aldl_settings.scanning == 0) {
 		send_aldl_message(_ALDL_MESSAGE_MODE9);	// send a mode 9 message to allow the ecm to resume normal mode
@@ -353,7 +357,8 @@ gint linuxaldl_gui_scan_on_interval(gpointer data)
 
 // perform a single scan operation: attempt to get one mode1 message,
 // save the data to the log and update the current data array
-static void linuxaldl_gui_scan(GtkWidget * widget, gpointer data)
+static void
+linuxaldl_gui_scan(GtkWidget * widget, gpointer data)
 {
 	int res;
 	char *inbuffer;
@@ -418,15 +423,15 @@ static void linuxaldl_gui_scan(GtkWidget * widget, gpointer data)
 
 				// write the seconds to the file
 				write(aldl_settings.flogfile,
-				      (char *)(&aldl_gui_settings.
-					       data_timestamp.tv_sec),
-				      sizeof(time_t));
+				      (char
+				       *)(&aldl_gui_settings.data_timestamp.
+					  tv_sec), sizeof(time_t));
 
 				// write the microseconds to the file
 				write(aldl_settings.flogfile,
-				      (char *)(&aldl_gui_settings.
-					       data_timestamp.tv_usec),
-				      sizeof(suseconds_t));
+				      (char
+				       *)(&aldl_gui_settings.data_timestamp.
+					  tv_usec), sizeof(suseconds_t));
 
 				// write the data to the file
 				write(aldl_settings.flogfile, inbuffer, res);
@@ -445,7 +450,8 @@ static void linuxaldl_gui_scan(GtkWidget * widget, gpointer data)
 }
 
 // this function is called when the scan button is toggled
-static void linuxaldl_gui_scan_toggle(GtkWidget * widget, gpointer data)
+static void
+linuxaldl_gui_scan_toggle(GtkWidget * widget, gpointer data)
 {
 	struct itimerval timer_value;
 
@@ -483,7 +489,8 @@ static void linuxaldl_gui_scan_toggle(GtkWidget * widget, gpointer data)
 // this function is called as the result of the "ok" button being
 // selected in the load log file selection dialogue.
 // XXX not implemented
-static void linuxaldl_gui_load(GtkWidget * widget, GtkFileSelection * fs)
+static void
+linuxaldl_gui_load(GtkWidget * widget, GtkFileSelection * fs)
 {
 	g_warning("Log viewing module is not yet implemented.\n");
 	return;
@@ -496,7 +503,8 @@ static void linuxaldl_gui_load(GtkWidget * widget, GtkFileSelection * fs)
 // this function is called as the result of the "ok" button being
 // selected in the save log file selection dialogue. it saves 
 // the current buffer into the selected file.
-static void linuxaldl_gui_save(GtkWidget * widget, GtkFileSelection * fs)
+static void
+linuxaldl_gui_save(GtkWidget * widget, GtkFileSelection * fs)
 {
 	int i, length, res;
 	char extension[4];
@@ -558,7 +566,8 @@ static void linuxaldl_gui_save(GtkWidget * widget, GtkFileSelection * fs)
 // =======================
 
 // write the header line to the csv file
-static void linuxaldl_gui_write_csv_header()
+static void
+linuxaldl_gui_write_csv_header()
 {
 	int i;
 
@@ -588,7 +597,8 @@ static void linuxaldl_gui_write_csv_header()
 }
 
 // write a data line for the csv file
-static void linuxaldl_gui_write_csv_line()
+static void
+linuxaldl_gui_write_csv_line()
 {
 	int i;
 
@@ -635,7 +645,8 @@ static void linuxaldl_gui_write_csv_line()
 // ==================================
 
 // returns a GtkWidget pointer to a new options window
-GtkWidget *linuxaldl_gui_options_new()
+GtkWidget *
+linuxaldl_gui_options_new()
 {
 	// base window
 	// -----------
@@ -703,7 +714,8 @@ GtkWidget *linuxaldl_gui_options_new()
 // ==================================
 
 // returns a GtkWidget pointer to an empty datareadout window
-GtkWidget *linuxaldl_gui_datareadout_new()
+GtkWidget *
+linuxaldl_gui_datareadout_new()
 {
 	int i = 0;
 	GtkWidget *dataw;
@@ -724,7 +736,8 @@ GtkWidget *linuxaldl_gui_datareadout_new()
 // has been allocated yet before it tries to update the values.
 // if it has not yet been allocated, it returns doing nothing.
 // .csv log file updating is also done here.
-static void linuxaldl_gui_datareadout_update(GtkWidget * widget, gpointer data)
+static void
+linuxaldl_gui_datareadout_update(GtkWidget * widget, gpointer data)
 {
 	if (aldl_gui_settings.data_readout_labels == NULL)
 		return;
@@ -752,7 +765,8 @@ static void linuxaldl_gui_datareadout_update(GtkWidget * widget, gpointer data)
 // shows the Data Readout window, setting it up for the current definition.
 // data must point to the Data Readout window object generated by
 // the linuxaldl_gui_datareadout_new function
-static void linuxaldl_gui_datareadout_show(GtkWidget * widget, gpointer data)
+static void
+linuxaldl_gui_datareadout_show(GtkWidget * widget, gpointer data)
 {
 	// if no definition selected, return without doing anything
 	if (aldl_settings.definition == NULL) {
@@ -885,7 +899,8 @@ static void linuxaldl_gui_datareadout_show(GtkWidget * widget, gpointer data)
 
 // opens the definition selection dialog if no definition has been selected,
 // otherwise pops up an alert and returns
-static void linuxaldl_gui_try_choosedef(GtkWidget * widget, gpointer data)
+static void
+linuxaldl_gui_try_choosedef(GtkWidget * widget, gpointer data)
 {
 	if (aldl_settings.definition == NULL)
 		linuxaldl_gui_widgetshow(widget, data);
@@ -896,7 +911,8 @@ static void linuxaldl_gui_try_choosedef(GtkWidget * widget, gpointer data)
 }
 
 // returns a GtkWidget pointer to the definition selection dialog
-GtkWidget *linuxaldl_gui_choosedef_new()
+GtkWidget *
+linuxaldl_gui_choosedef_new()
 {
 	int i = 0;
 	GtkWidget *defwindow;
@@ -931,8 +947,8 @@ GtkWidget *linuxaldl_gui_choosedef_new()
 		g_print("%s", aldl_settings.aldl_definition_table[i]->name);
 		deflist =
 		    g_list_append(deflist,
-				  (gpointer) aldl_settings.
-				  aldl_definition_table[i]->name);
+				  (gpointer)
+				  aldl_settings.aldl_definition_table[i]->name);
 		i++;
 	}
 	if (i == 0)
@@ -985,7 +1001,8 @@ GtkWidget *linuxaldl_gui_choosedef_new()
 // presses the "select" button in the definition selection dialogue.
 // data must point to a valid GtkEntry that contains the string for the definition name.
 
-static void linuxaldl_gui_load_definition(GtkWidget * widget, gpointer data)
+static void
+linuxaldl_gui_load_definition(GtkWidget * widget, gpointer data)
 {
 	aldl_settings.aldldefname = gtk_entry_get_text(GTK_ENTRY(data));
 
@@ -1037,7 +1054,8 @@ static void linuxaldl_gui_load_definition(GtkWidget * widget, gpointer data)
 // pops up an alert with message in the body and an ok button.
 // the alert will block access to other windows until the button is clicked.
 // background activity will continue.
-void quick_alert(gchar * message)
+void
+quick_alert(gchar * message)
 {
 	GtkWidget *label, *content_area;
 	GtkWidget *dialog = gtk_dialog_new_with_buttons("Alert", NULL,
@@ -1064,9 +1082,9 @@ void quick_alert(gchar * message)
 // with range min to max and step size step that starts out with the initial value init_val.
 // the adjustment calls the function change_callback when the value changes.
 // it will have a label placed above it with the text adj_label
-GtkWidget *hscale_new_with_label(gdouble init_val, gdouble min, gdouble max,
-				 gdouble step, GtkSignalFunc changed,
-				 gchar * adj_label)
+GtkWidget *
+hscale_new_with_label(gdouble init_val, gdouble min, gdouble max,
+		      gdouble step, GtkSignalFunc changed, gchar * adj_label)
 {
 	GtkWidget *vbox = gtk_vbox_new(FALSE, 0);
 	GtkWidget *label = gtk_label_new(adj_label);

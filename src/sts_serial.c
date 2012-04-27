@@ -129,7 +129,8 @@ void int_to_hexstr(int val, char *buf, unsigned int len);
 //  for a period of sec secs; the timeout occured. the data was
 //  not available (e.g. the device sending the data was too slow).
 //  on an error, -1 is returned and errno is set appropriately.
-int readwithtimeout(int fd, void *buf, size_t count, int secs)
+int
+readwithtimeout(int fd, void *buf, size_t count, int secs)
 {
 	fd_set readfs;
 	struct timeval timeout;
@@ -158,7 +159,8 @@ int readwithtimeout(int fd, void *buf, size_t count, int secs)
 
 //read_seq_timeout()
 // handles the SIGALRM signal
-void read_sequence_timeout(int signalno)
+void
+read_sequence_timeout(int signalno)
 {
 	sts_serial_read_seq_timeout = 1;
 }
@@ -180,8 +182,9 @@ typedef void (*sighandler_t) (int);
 // being used elsewhere in the process, its timer will be delayed by however
 // long this call to read_sequence takes, since the timer is saved and then
 // restored to its original state.
-int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
-		  long secs, long usecs)
+int
+read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
+	      long secs, long usecs)
 {
 	unsigned int seq_matched = 0, bytes_read = 0, i;
 	int res, retval = 0;
@@ -297,7 +300,8 @@ int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
 //   I think tty_ioctl.c has to be compiled into the kernel with BOTHER defined for this to work.
 //   set cbaud to BOTHER and c_ospeed to the desired setting.
 //   This is done through a call to set_custom_baud_rate_no_ioctl()
-int set_custom_baud_rate(int fport, unsigned int desired_baudrate)
+int
+set_custom_baud_rate(int fport, unsigned int desired_baudrate)
 {
 	unsigned int new_baudrate;
 	struct termios port_attrib;
@@ -314,7 +318,6 @@ int set_custom_baud_rate(int fport, unsigned int desired_baudrate)
 
 		return set_custom_baud_rate_no_ioctl(fport, desired_baudrate);
 	}
-
 	// set the baudrate to B38400 (custom baud setting)
 
 	if (cfsetspeed(&port_attrib, B38400) < 0) {
@@ -322,7 +325,6 @@ int set_custom_baud_rate(int fport, unsigned int desired_baudrate)
 		    (" Call to cfsetspeed failed. Unable to set baud rate.\n");
 		return -1;
 	}
-
 	// clear the serial line
 	tcflush(fport, TCIOFLUSH);
 
@@ -391,7 +393,8 @@ int set_custom_baud_rate(int fport, unsigned int desired_baudrate)
 //   This is called through set_custom_baud_rate() if a call to ioctl() fails
 //       ... assuming BOTHER is defined. 
 // XXX this is an untested function (my architecture doesn't have BOTHER defined)
-int set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate)
+int
+set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate)
 {
 #ifndef BOTHER
 	return -1;
@@ -445,7 +448,8 @@ int set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate)
 // returns the file descriptor for the connection, or -1 if an error occurs.
 
 // note that this only supports baud rates defined in termios.
-int serial_connect(const char *portpath, int flags, speed_t baudrate)
+int
+serial_connect(const char *portpath, int flags, speed_t baudrate)
 {
 	speed_t new_baudrate;
 	struct termios port_attrib;	// termios attributes struct
@@ -501,7 +505,8 @@ int serial_connect(const char *portpath, int flags, speed_t baudrate)
 
 // returns the speed_t baudrate defined in <termios.h> in unsigned integer format
 // e.g. convert_baudrate(B57600) returns 57600. on unrecognized baudrate, returns 0.
-unsigned int convert_baudrate(speed_t baudrate)
+unsigned int
+convert_baudrate(speed_t baudrate)
 {
 	unsigned int res;
 	switch (baudrate) {
@@ -576,7 +581,8 @@ unsigned int convert_baudrate(speed_t baudrate)
 // hex character string and prints it to stream.
 // hexadecimal bytes are each seperated by spaces.
 // there is no trailing space.
-void fprinthex(FILE * stream, char *seq, unsigned int seq_len)
+void
+fprinthex(FILE * stream, char *seq, unsigned int seq_len)
 {
 	unsigned int i;
 	char hexbuf[3];
@@ -598,12 +604,14 @@ void fprinthex(FILE * stream, char *seq, unsigned int seq_len)
 // error message and return.
 // integer conversion: buf must be 9 bytes long
 
-void char_to_hexstr(char val, char *buf, unsigned int len)
+void
+char_to_hexstr(char val, char *buf, unsigned int len)
 {
 	unsigned char value = (unsigned)val;
 	char hex_char[] =
 	    { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C',
-      'D', 'E', 'F' };
+		'D', 'E', 'F'
+	};
 
 	if (len < 3) {
 		fprintf(stderr,
@@ -616,12 +624,14 @@ void char_to_hexstr(char val, char *buf, unsigned int len)
 
 }
 
-void int_to_hexstr(int val, char *buf, unsigned int len)
+void
+int_to_hexstr(int val, char *buf, unsigned int len)
 {
 	unsigned int value = (unsigned)val;
 	char hex_char[] =
 	    { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C',
-      'D', 'E', 'F' };
+		'D', 'E', 'F'
+	};
 	int i = 0;
 
 	if (len < 9) {
