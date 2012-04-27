@@ -1,7 +1,8 @@
 # linuxaldl Makefile
 
 CC = gcc
-CFLAGS = -g -W -Wall -Wno-unused `pkg-config --cflags gtk+-2.0`
+CFLAGS = -g3 -W -Wall -Wno-unused `pkg-config --cflags gtk+-2.0` 
+CFLAGS += -D_LINUXALDL_DEBUG
 
 V = @
 
@@ -21,7 +22,8 @@ linuxaldl_gui.o: linuxaldl_gui.c
 
 linuxaldl: linuxaldl.o linuxaldl_gui.o sts_serial.o
 	@echo + link main
-	$(V)$(CC) $(CFLAGS) -lpopt `pkg-config --libs gtk+-2.0` -o ../bin/$@ linuxaldl.o linuxaldl_gui.o sts_serial.o
+	#$(V)$(CC) $(CFLAGS) -lpopt `pkg-config --libs gtk+-2.0` -o ../bin/$@ linuxaldl.o linuxaldl_gui.o sts_serial.o
+	$(V)$(CC) $(CFLAGS) -lpopt -o ../bin/$@ linuxaldl.o linuxaldl_gui.o sts_serial.o -lpopt `pkg-config --libs gtk+-2.0` 
 
 clean:
 	@echo + clean

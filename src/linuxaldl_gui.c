@@ -348,11 +348,28 @@ gint
 linuxaldl_gui_scan_on_interval(gpointer data)
 {
 	if (aldl_settings.scanning == 0) {
-		send_aldl_message(_ALDL_MESSAGE_MODE9);	// send a mode 9 message to allow the ecm to resume normal mode
-		return 0;	// returning 0 tells GTK to turn off the interval timer for this function
+		// send a mode 9 message to allow the ecm to resume normal mode
+		printf("%s sending mode9 message\n", __func__);
+		send_aldl_message(aldl_settings.definition->mode9_request,
+				  aldl_settings.definition->mode9_request_length);
+		// returning 0 tells GTK to turn off the interval timer for this function
+		return 0; 
 	}
+	//printf("%s skip scan for now\n", __func__);
 	linuxaldl_gui_scan(NULL, NULL);	// perform a scan operation
 	return 1;
+}
+
+static void
+linux_aldl_start_chatter(void)
+{
+	// send a mode 8 message to silence the ecm
+	send_aldl_message(aldl_settings.definition->mode8_request,
+			  aldl_settings.definition->mode8_request_length);
+	tcflush(aldl_settings.faldl,TCIOFLUSH); // flush send and receive buffers
+	
+	send_aldl_message(aldl_settings.definition->mode1_request,
+			  aldl_settings.definition->mode1_request_length); 
 }
 
 // perform a single scan operation: attempt to get one mode1 message,
@@ -367,10 +384,15 @@ linuxaldl_gui_scan(GtkWidget * widget, gpointer data)
 
 	inbuffer = g_malloc(buf_size);
 
+#if 0	
 	// send a mode 8 message to silence the ecm
-	send_aldl_message(_ALDL_MESSAGE_MODE8);
+	//send_aldl_message(_ALDL_MESSAGE_MODE8);
+	send_aldl_message(aldl_settings.definition->mode8_request,
+			  aldl_settings.definition->mode8_request_length);
 	tcflush(aldl_settings.faldl, TCIOFLUSH);	// flush send and receive buffers
+#endif
 
+	linux_aldl_start_chatter();
 	// request a mode 1 message
 	res = get_mode1_message(inbuffer, buf_size);
 #ifdef _LINXUALDL_DEBUG
@@ -471,7 +493,7 @@ linuxaldl_gui_scan_toggle(GtkWidget * widget, gpointer data)
 			    g_timeout_add(aldl_settings.scan_interval,
 					  linuxaldl_gui_scan_on_interval, NULL);
 			aldl_settings.scanning = 1;
-
+			printf("%s do one scan\n", __func__);
 			linuxaldl_gui_scan(NULL, NULL);	// perform initial scan
 		}
 	} else {
@@ -678,11 +700,9 @@ linuxaldl_gui_options_new()
 	gtk_widget_show(vbox_options);
 
 	// scan interval adjustment
-	GtkWidget *interval_adj =
-	    hscale_new_with_label(aldl_settings.scan_interval,
-				  50.0, 300.0, 1.0,
-				  G_CALLBACK
-				  (linuxaldl_gui_scan_interval_changed),
+	GtkWidget* interval_adj = hscale_new_with_label(aldl_settings.scan_interval,
+							50.0, 1000.0, 1.0,
+							G_CALLBACK(linuxaldl_gui_scan_interval_changed),
 				  "Scan Interval (msec)");
 
 	gtk_box_pack_start(GTK_BOX(vbox_options), interval_adj, FALSE, FALSE,
@@ -690,11 +710,9 @@ linuxaldl_gui_options_new()
 	gtk_widget_show(interval_adj);
 
 	// timeout adjustment
-	GtkWidget *timeout_adj =
-	    hscale_new_with_label(aldl_settings.scan_timeout,
-				  50.0, 300.0, 1.0,
-				  G_CALLBACK
-				  (linuxaldl_gui_scan_timeout_changed),
+	GtkWidget* timeout_adj = hscale_new_with_label(aldl_settings.scan_timeout,
+						       50.0, 1000.0, 1.0,
+						       G_CALLBACK(linuxaldl_gui_scan_timeout_changed),
 				  "Scan Timeout (msec)");
 
 	gtk_box_pack_start(GTK_BOX(vbox_options), timeout_adj, FALSE, FALSE, 0);

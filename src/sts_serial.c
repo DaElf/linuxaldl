@@ -186,11 +186,18 @@ int
 read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
 	      long secs, long usecs)
 {
-	unsigned int seq_matched = 0, bytes_read = 0, i;
-	int res, retval = 0;
+	unsigned int seq_matched = 0;
+	unsigned int bytes_read = 0;
+	int i;
+	int res;
+	int retval = 0;
 
 	size_t seqbuf_size = count;
 	char *seqbuf = malloc(seqbuf_size);
+
+	printf("%s looking\n", __func__);
+	fprinthex(stdout, seq, seq_size);
+	printf("\n");
 
 	struct itimerval timer_value, old_timer_value;
 	sighandler_t old_sig_handler;
@@ -211,16 +218,20 @@ read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
 	while (sts_serial_read_seq_timeout == 0) {
 		// if the sequence has been matched
 		if (seq_matched == seq_size) {
-			//printf("Sequence matched.\n");
+			//printf("Sequence matched %lu.\n", seq_size);
 			// if count bytes have been read, stop and return.
 			if (bytes_read == count) {
 				sts_serial_read_seq_timeout = 1;
 				break;
 			} else {
-				//printf("Waiting for %d bytes.\n",count-bytes_read);
-				res =
-				    read(fd, buf + bytes_read,
-					 count - bytes_read);
+				//printf("Waiting for %lu bytes\n", count - bytes_read);
+				res = read(fd, buf+bytes_read, count-bytes_read);
+				if (res > 0) {
+					fprintf(stdout, "Read0 bytes %d bytes_read %u\t", res,
+						bytes_read);
+					fprinthex(stdout, buf+bytes_read, res);
+					fprintf(stdout, "\n");
+				}
 				if (res == 0)
 					continue;
 				else if (res < 0) {
@@ -234,10 +245,14 @@ read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
 					bytes_read += res;
 				continue;
 			}
-		} else		// if the sequence hasn't been matched...
-		{
-
+		} else {
+			// if the sequence hasn't been matched...
 			res = read(fd, seqbuf, seqbuf_size);
+			if (res > 0) {
+				fprintf(stdout, "Read1 bytes %d\t", res);
+				fprinthex(stdout, seqbuf, res);
+				fprintf(stdout, "\n");
+			}
 			if (res == 0)
 				continue;
 			else if (res < 0) {

@@ -37,9 +37,11 @@ LICENSING INFORMATION:
 // global variables
 // =================================================
 
-linuxaldl_settings aldl_settings =
-    { NULL, 0, NULL, 1, 0, NULL, NULL, aldl_definition_table, NULL, NULL, NULL,
-	150, 100
+linuxaldl_settings aldl_settings = { NULL, 0, NULL, 1, 0, 
+				     NULL, NULL, aldl_definition_table, 
+				     NULL, NULL, NULL, 
+				     .scan_interval = 1000,
+				     .scan_timeout = 1000
 };
 
 // ============================================================================
@@ -292,22 +294,30 @@ get_mode1_message(char *inbuffer, unsigned int size)
 	    get_checksum(outbuffer, def->mode1_request_length - 1);
 
 	// form the response message start sequence
-	char seq[] =
-	    { def->mode1_request[0], 0x52 + def->mode1_response_length, 0x01 };
+	//char seq[] = { def->mode1_request[0], 0x52+def->mode1_response_length, 0x01};
+	char seq[] = { 0xF0, 0x56, 0xF4, 0xC6 };
 
 	// flush the serial receive buffer
 	tcflush(aldl_settings.faldl, TCIFLUSH);
 
 	// write the request to the serial interface
+#if 0
 	write(aldl_settings.faldl, &outbuffer, def->mode1_request_length);
-
 	// wait for the bytes to be written
 	tcdrain(aldl_settings.faldl);
+#endif
+#if 0
+	send_aldl_message(def->mode1_request,
+			  def->mode1_request_length); 
+#endif
 
 	// wait for response from ECM
 	// read sequence, 50msec timeout
 	res = read_sequence(aldl_settings.faldl, inbuffer, mode1_len,
-			    seq, 3, 0, aldl_settings.scan_timeout * 1000);
+			  seq, 3, 0, 
+			  aldl_settings.scan_timeout*1000);
+
+	printf("%s read_sequence returned %d\n", __func__, res);
 
 	if (res < 0) {
 		fprintf(stderr, "Error receiving mode1 message: %s\n",
@@ -324,12 +334,17 @@ get_mode1_message(char *inbuffer, unsigned int size)
 		return 0;
 	}
 
+#if 0
 	char checksum = get_checksum(inbuffer, mode1_len - 1);
 	if (inbuffer[mode1_len - 1] != checksum) {
-		fprintf(stderr, "MODE 1 bad checksum.\n");
+		fprintf(stderr,"MODE 1 bad checksum.\t");
+		fprinthex(stderr, &inbuffer[mode1_len-1], 1);
+		fprintf(stderr,"\t");
+		fprinthex(stderr, &checksum, 1);
+		fprintf(stderr,"\n");
 		return -1;
 	}
-
+#endif
 	return res;
 }
 

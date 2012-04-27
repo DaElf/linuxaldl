@@ -28,8 +28,8 @@ LICENSING INFORMATION:
 
 // macros
 
-#define _ALDL_MESSAGE_MODE8 aldl_settings.definition->mode8_request,aldl_settings.definition->mode8_request_length
-#define _ALDL_MESSAGE_MODE9 aldl_settings.definition->mode9_request,aldl_settings.definition->mode9_request_length
+//#define _ALDL_MESSAGE_MODE8 aldl_settings.definition->mode8_request,aldl_settings.definition->mode8_request_length
+//#define _ALDL_MESSAGE_MODE9 aldl_settings.definition->mode9_request,aldl_settings.definition->mode9_request_length
 
 #define __MAX_REQUEST_SIZE 16	// maximum size (bytes) of a request message
 							  // to send to the ECM
