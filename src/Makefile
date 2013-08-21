@@ -1,7 +1,7 @@
 # linuxaldl Makefile
 
 CC = gcc
-CFLAGS = -g -Wall -Wno-unused `pkg-config --cflags gtk+-2.0`
+CFLAGS = -g -Wextra -Wall -Wno-unused `pkg-config --cflags gtk+-2.0`
 
 V = @
 
