@@ -1,23 +1,17 @@
 # linuxaldl Makefile
 
 CC = gcc
-CFLAGS = -g -W -Wall -Wno-unused `pkg-config --cflags gtk+-2.0`
+CFLAGS = -g -Wall -Wno-unused `pkg-config --cflags gtk+-2.0`
 
 V = @
 
+HEADERS = linuxaldl_definitions.h linuxaldl_gui.h linuxaldl.h sts_serial.h
+
 all: linuxaldl
 
-sts_serial.o: sts_serial.c
-	@echo + cc sts_serial.c
-	$(V)$(CC) $(CFLAGS) -c sts_serial.c
-
-linuxaldl.o: linuxaldl.c
-	@echo + cc linuxaldl.c
-	$(V)$(CC) $(CFLAGS) -c linuxaldl.c
-
-linuxaldl_gui.o: linuxaldl_gui.c
-	@echo + cc linuxaldl_gui.c
-	$(V)$(CC) $(CFLAGS) -c linuxaldl_gui.c
+%.o: %.c $(HEADERS)
+	@echo + cc $@
+	$(V)$(CC) $(CFLAGS) -c $<
 
 linuxaldl: linuxaldl.o linuxaldl_gui.o sts_serial.o
 	@echo + link main
