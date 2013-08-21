@@ -1,5 +1,3 @@
-
-
 /*(C) copyright 2008, Steven Snyder, All Rights Reserved
 
 Steven T. Snyder, <stsnyder@ucla.edu> http://www.steventsnyder.com
@@ -18,7 +16,6 @@ LICENSING INFORMATION:
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 
 #include <unistd.h>
 #include <stdio.h>
@@ -40,7 +37,11 @@ LICENSING INFORMATION:
 // global variables
 // =================================================
 
-linuxaldl_settings aldl_settings = { NULL, 0, NULL, 1, 0, NULL, NULL, aldl_definition_table, NULL, NULL, NULL, 150, 100};
+linuxaldl_settings aldl_settings = { 
+	.aldl_definition_table = aldl_definition_table,
+	.scan_interval = 150,
+	.scan_timeout = 100
+};
 
 // ============================================================================
 //
