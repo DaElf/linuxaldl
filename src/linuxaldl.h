@@ -1,8 +1,6 @@
 #ifndef LINUXALDL_INCLUDED
 #define LINUXALDL_INCLUDED
 
-
-
 /*(C) copyright 2008, Steven Snyder, All Rights Reserved
 
 Steven T. Snyder, <stsnyder@ucla.edu> http://www.steventsnyder.com
@@ -26,23 +24,19 @@ LICENSING INFORMATION:
 //#define _LINUXALDL_DEBUG
 
 #define MAX_CONNECT_ATTEMPTS 3
-#define BAUDRATE B9600
 
 // macros
 
 #define _ALDL_MESSAGE_MODE8 aldl_settings.definition->mode8_request,aldl_settings.definition->mode8_request_length
 #define _ALDL_MESSAGE_MODE9 aldl_settings.definition->mode9_request,aldl_settings.definition->mode9_request_length
 
-#define __MAX_REQUEST_SIZE 16 // maximum size (bytes) of a request message
-							  // to send to the ECM
+#define __MAX_REQUEST_SIZE 16 /* maximum size (bytes) of a request message to send to the ECM */
 
 #define LINUXALDL_MODE1_END_DEF {NULL,0,0,0,0,0,NULL}
-
 
 typedef enum _ALDL_OP { ALDL_OP_MULTIPLY=0, ALDL_OP_DIVIDE=1, ALDL_OP_SEPERATOR=9} ALDL_OP_t;
 
 #define _DEF_SEP(label) {label,0,0,ALDL_OP_SEPERATOR,0,0,NULL}
-
 
 // ============================================================================
 // ALDL DEFINITION STRUCTS
@@ -54,26 +48,24 @@ typedef enum _ALDL_OP { ALDL_OP_MULTIPLY=0, ALDL_OP_DIVIDE=1, ALDL_OP_SEPERATOR=
 // byte_def_t struct
 typedef struct _linuxaldl_byte_definition{
 	const char* label;
-	unsigned int byte_offset; // the offset from the 1st byte of the data part
-							  // of the mode1 message
-	unsigned int bits; // 8 or 16 are currently supported
-
+	unsigned int byte_offset; /* Offset from the 1st byte of the data part of the mode1 message */
+	unsigned int bits; /* 8 or 16 are currently supported */
 	unsigned int operation; // ALDL_OP_MULTIPLY: (X*factor)+offest
-							// ALDL_OP_DIVIDE: (factor/X)+offset
-							// ALDL_OP_SEPERATOR: use this for a seperator for the display,
-							//    not a data item.  with this option no other
-							//	  values matter except label.
-							//	  you can also use the _DEF_SEP(label) macro like:
-							//	  _DEF_SEP("---Basic Data---")
+				// ALDL_OP_DIVIDE: (factor/X)+offset
+				// ALDL_OP_SEPERATOR: use this for a seperator for the display,
+				//    not a data item.  with this option no other
+				//	  values matter except label.
+				//	  you can also use the _DEF_SEP(label) macro like:
+				//	  _DEF_SEP("---Basic Data---")
 
 	float op_factor; // factor for the operation
 	float op_offset; // offset for the operation
 
-
-	const char* units;
+	const char* units; /* Text string */
 } byte_def_t;
 
 typedef struct _linuxaldl_definition{
+	const char* mask;
 	const char* name;
 	char mode1_request[__MAX_REQUEST_SIZE];  // the mode 1 request message, including the checksum
 	unsigned int mode1_request_length;  // the length of the mode 1 message including the checksum
@@ -95,49 +87,44 @@ typedef struct _linuxaldl_definition{
 	char mode9_request[__MAX_REQUEST_SIZE];  // the mode 9 (un-silence) request message, incl checksum
 	unsigned int mode9_request_length;  // the length of the mode 9 message including the checksum
 
-
+	unsigned int basic_baudrate;  /* Fallback datarate */
+	unsigned int ideal_baudrate;  /* Desired datarate -- 8192 or 160 */
 } aldl_definition;
 
-
-
 // looks up def_name in the aldl_definition_table until it finds the first 
-// definition in the table with the name def_name
+// definition in the table with the name def_name or the mask defmask
 // if the definition is not in the table, returns NULL
-aldl_definition* aldl_get_definition(const char* defname);
+aldl_definition* aldl_get_definition(const char* defname, const char *defmask);
 
 typedef struct _linuxaldl_settings
 {
+	/* Configuration fields */
 	const char* aldlportname; // path to aldl interface port
-	int faldl; 			// aldl serial interface file descriptor
-
 	const char* logfilename; 	// filename for the log file
-	int flogfile; 		// file descriptor for log file
-
-	int scanning; // 1 when the timer has been set for making scans
-					// 0 when not scanning
-
 	const char* aldldefname; // name for the ALDL definition to be used
-	aldl_definition* definition; // see linuxaldl_definitions.h
-
-
-	aldl_definition** aldl_definition_table; // array of pointers to data definitions.
-											// this table is allocated in linuxaldl_definitions.h
-											// and its value assigned upon the initialization of
-											// the global "aldl_settings" variable
-
-	char* data_set_raw;			// the current/most recent set of data from a mode1 message.
-								// this is allocated when a definition is selected
-
-	char** data_set_strings;	// pointer to array of data set in string format.
-								// allocated when a definition is selected in the GUI
-
-	float* data_set_floats;		// data set in float format
-								// allocated when a definition is selected in the GUI
 
 	unsigned int scan_interval; // msec between scan requests
 	unsigned int scan_timeout; // msec to timeout on scan request.
-						// note that read-sequence takes timeout in usec.
-						// usec = msec*1000
+				// note that read-sequence takes timeout in usec.				// usec = msec*1000
+
+	/* Data definitions */
+	aldl_definition** aldl_definition_table; // array of pointers to data definitions. (see linuxaldl_definitions.h)
+	
+	/* Runtime stuff */
+	int faldl; 			// aldl serial interface file descriptor
+	int flogfile; 		// file descriptor for log file
+	int scanning; // 1 when the timer has been set for making scans, otherwise 0.
+	aldl_definition* definition; // see linuxaldl_definitions.h
+
+	char* data_set_raw;	// the current/most recent set of data from a mode1 message.
+				// this is allocated when a definition is selected
+
+	char** data_set_strings;	// pointer to array of data set in string format.
+					// allocated when a definition is selected in the GUI
+
+	float* data_set_floats;		// data set in float format
+					// allocated when a definition is selected in the GUI
+
 } linuxaldl_settings;
 
 // function prototypes

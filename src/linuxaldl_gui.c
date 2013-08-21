@@ -1,23 +1,20 @@
-
-
-
 /*(C) copyright 2008, Steven Snyder, All Rights Reserved
 
-Steven T. Snyder, <stsnyder@ucla.edu> http://www.steventsnyder.com
+  Steven T. Snyder, <stsnyder@ucla.edu> http://www.steventsnyder.com
 
-LICENSING INFORMATION:
- This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  LICENSING INFORMATION:
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
@@ -101,11 +98,11 @@ int linuxaldl_gui(int argc, char* argv[])
 	gtk_window_set_position(GTK_WINDOW (lfilew), GTK_WIN_POS_CENTER);
 	g_signal_connect(G_OBJECT (lfilew), "destroy", G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (lfilew)->ok_button), "clicked", 
-										G_CALLBACK (linuxaldl_gui_load), (gpointer) lfilew);
+			 G_CALLBACK (linuxaldl_gui_load), (gpointer) lfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (lfilew)->ok_button), "clicked", 
-										G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
+			 G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (lfilew)->cancel_button), "clicked",
-										G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
+			 G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) lfilew);
 	// stop the window from being destroyed when the X is clicked at the top right
 	g_signal_connect(G_OBJECT(lfilew),"delete_event", G_CALLBACK (hide_on_delete), NULL);
 										
@@ -115,11 +112,11 @@ int linuxaldl_gui(int argc, char* argv[])
 	gtk_window_set_position(GTK_WINDOW (sfilew), GTK_WIN_POS_CENTER);
 	g_signal_connect(G_OBJECT (sfilew), "destroy", G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (sfilew)->ok_button), "clicked", 
-										G_CALLBACK (linuxaldl_gui_save), (gpointer) sfilew);
+			 G_CALLBACK (linuxaldl_gui_save), (gpointer) sfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (sfilew)->ok_button), "clicked", 
-										G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
+			 G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
 	g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (sfilew)->cancel_button), "clicked",
-										G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
+			 G_CALLBACK (linuxaldl_gui_widgethide), (gpointer) sfilew);
 	// stop the window from being destroyed when the X is clicked at the top right
 	g_signal_connect(G_OBJECT(sfilew),"delete_event", G_CALLBACK (hide_on_delete), NULL);
 	
@@ -158,14 +155,14 @@ int linuxaldl_gui(int argc, char* argv[])
 	// options button
 	button = gtk_button_new_with_label("Options");
 	g_signal_connect(G_OBJECT(button), "clicked",
-			G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) optionsw);
+			 G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) optionsw);
 	gtk_container_add(GTK_CONTAINER (bbox_cmds), button);
 	gtk_widget_show(button);	
 	
 	// exit button
 	button = gtk_button_new_with_label("Quit");
 	g_signal_connect(G_OBJECT(button), "clicked",
-							G_CALLBACK(linuxaldl_gui_quit), NULL);
+			 G_CALLBACK(linuxaldl_gui_quit), NULL);
 	gtk_container_add(GTK_CONTAINER (bbox_cmds), button);
 	gtk_widget_show(button);
 	
@@ -189,21 +186,21 @@ int linuxaldl_gui(int argc, char* argv[])
 	// load .log file button
 	button = gtk_button_new_with_label("Load .log (playback)");
 	g_signal_connect(G_OBJECT(button), "clicked",
-					G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) lfilew);
+			 G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) lfilew);
 	gtk_container_add(GTK_CONTAINER (bbox_settings_top), button);
 	gtk_widget_show(button);
 	
 	// save .log file button
 	button = gtk_button_new_with_label("Select .log (to record)");
 	g_signal_connect(G_OBJECT(button), "clicked",
-					G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) sfilew);
+			 G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) sfilew);
 	gtk_container_add(GTK_CONTAINER (bbox_settings_top), button);
 	gtk_widget_show(button);
 	
 	// select definition
 	button = gtk_button_new_with_label("Select definition");
 	g_signal_connect(G_OBJECT(button), "clicked",
-					G_CALLBACK(linuxaldl_gui_try_choosedef), (gpointer) choosedefw);
+			 G_CALLBACK(linuxaldl_gui_try_choosedef), (gpointer) choosedefw);
 	gtk_container_add(GTK_CONTAINER (bbox_settings_top), button);
 	gtk_widget_show(button);
 
@@ -218,7 +215,7 @@ int linuxaldl_gui(int argc, char* argv[])
 	// select definition
 	button = gtk_button_new_with_label("Show Data Readout");
 	g_signal_connect(G_OBJECT(button), "clicked",
-					G_CALLBACK(linuxaldl_gui_datareadout_show), (gpointer) datareadoutw);
+			 G_CALLBACK(linuxaldl_gui_datareadout_show), (gpointer) datareadoutw);
 	gtk_container_add(GTK_CONTAINER (frame_data_control), button);
 	gtk_widget_show(button);
 
@@ -300,8 +297,8 @@ static void linuxaldl_gui_scan_interval_changed( GtkAdjustment *adj, gpointer da
 		g_source_remove(aldl_gui_settings.scanning_tag);
 
 		aldl_gui_settings.scanning_tag = g_timeout_add(aldl_settings.scan_interval,
-															linuxaldl_gui_scan_on_interval,
-															NULL);
+							       linuxaldl_gui_scan_on_interval,
+							       NULL);
 	}
 }
 
@@ -383,8 +380,8 @@ static void linuxaldl_gui_scan( GtkWidget *widget, gpointer data)
 		{
 			// copy the data to the current data set
 			memcpy(	  aldl_settings.data_set_raw,
-					  inbuffer + aldl_settings.definition->mode1_data_offset,
-					  aldl_settings.definition->mode1_data_length);
+				  inbuffer + aldl_settings.definition->mode1_data_offset,
+				  aldl_settings.definition->mode1_data_length);
 
 			// update string and float representations
 			aldl_update_sets(ALDL_UPDATE_FLOATS|ALDL_UPDATE_STRINGS);
@@ -434,10 +431,10 @@ static void linuxaldl_gui_scan_toggle( GtkWidget *widget, gpointer data)
 	struct itimerval timer_value;
 
 	// if the button is down
-    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) 
-    {
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) 
+	{
 		// abort if no definition file selected, and toggle the button to off
-        if (aldl_settings.definition == NULL)
+		if (aldl_settings.definition == NULL)
 		{
 			g_print("Scan aborted -- No definition file selected.\n");
 			gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(widget),FALSE);
@@ -447,13 +444,13 @@ static void linuxaldl_gui_scan_toggle( GtkWidget *widget, gpointer data)
 		{
 			g_print("Starting scan.\n");
 			aldl_gui_settings.scanning_tag = g_timeout_add(aldl_settings.scan_interval,
-															linuxaldl_gui_scan_on_interval,
-															NULL);
+								       linuxaldl_gui_scan_on_interval,
+								       NULL);
 			aldl_settings.scanning = 1;
 
 			linuxaldl_gui_scan(NULL,NULL); // perform initial scan
 		}
-    } 
+	} 
 	else 	{
 		// button is up (turned off)
 		g_print("Stopping scan.\n");
@@ -528,7 +525,7 @@ static void linuxaldl_gui_save( GtkWidget *widget, GtkFileSelection *fs){
 		// if no definition is loaded yet, the definition loader has to write the header line.
 
 		// if no definition file selected, dont try to generate the header labels yet.
-        if (aldl_settings.definition == NULL)
+		if (aldl_settings.definition == NULL)
 			g_warning(".csv format selected but no definition has been loaded.\n");
 		else
 			linuxaldl_gui_write_csv_header();
@@ -600,7 +597,7 @@ static void linuxaldl_gui_write_csv_line()
 
 		// write the timestamp
 		fprintf(aldl_gui_settings.slogfile,"%d+%f", (int)aldl_gui_settings.data_timestamp.tv_sec,
-											(float)aldl_gui_settings.data_timestamp.tv_usec/1000000.0);
+			(float)aldl_gui_settings.data_timestamp.tv_usec/1000000.0);
 
 		// until at the end of the items in the definition...
 		for (i=0; def[i].label!=NULL; i++)
@@ -658,9 +655,9 @@ GtkWidget* linuxaldl_gui_options_new()
 
 	// scan interval adjustment
 	GtkWidget* interval_adj = hscale_new_with_label(aldl_settings.scan_interval,
-														50.0, 300.0, 1.0,
-									G_CALLBACK(linuxaldl_gui_scan_interval_changed),
-									"Scan Interval (msec)");
+							50.0, 300.0, 1.0,
+							G_CALLBACK(linuxaldl_gui_scan_interval_changed),
+							"Scan Interval (msec)");
 
 
 	gtk_box_pack_start(GTK_BOX(vbox_options),interval_adj,FALSE,FALSE,0);
@@ -669,9 +666,9 @@ GtkWidget* linuxaldl_gui_options_new()
 
 	// timeout adjustment
 	GtkWidget* timeout_adj = hscale_new_with_label(aldl_settings.scan_timeout,
-													50.0,300.0, 1.0,
-									G_CALLBACK(linuxaldl_gui_scan_timeout_changed),
-									"Scan Timeout (msec)");
+						       50.0,300.0, 1.0,
+						       G_CALLBACK(linuxaldl_gui_scan_timeout_changed),
+						       "Scan Timeout (msec)");
 
 	gtk_box_pack_start(GTK_BOX(vbox_options),timeout_adj,FALSE,FALSE,0);
 	gtk_widget_show(timeout_adj);
@@ -742,128 +739,128 @@ static void linuxaldl_gui_datareadout_update(GtkWidget* widget, gpointer data)
 // the linuxaldl_gui_datareadout_new function
 static void linuxaldl_gui_datareadout_show(GtkWidget* widget, gpointer data)
 {
-		// if no definition selected, return without doing anything
-		if (aldl_settings.definition == NULL)
-		{
-			g_print("No definition selected. Cannot show data readout. Choose a definition first.\n");
-			return;
-		}
-		// if the Data Readout labels have been defined, no need to generate, just show the window
-		if (aldl_gui_settings.data_readout_labels != NULL)
-		{
-			linuxaldl_gui_widgetshow(widget,data);
-			return;
-		}
-
-		GtkWidget *vbox;
-		GtkWidget *databox;
-		GtkWidget *frame_main;
-		byte_def_t* def = aldl_settings.definition->mode1_def;
-		unsigned int i = 0, num_items=0, row=0;
-
-		vbox = gtk_vbox_new(FALSE,0);
-		gtk_container_add(GTK_CONTAINER(data), vbox);
-		frame_main = gtk_frame_new("ALDL Data");		
-		gtk_box_pack_start(GTK_BOX (vbox), frame_main, FALSE, FALSE, 0);
-
-		// the frame for each data seperator go in databox
-		databox = gtk_vbox_new(FALSE,0);
-		gtk_container_add(GTK_CONTAINER(frame_main), databox);
-
-		gtk_widget_show(vbox);
-		gtk_widget_show(frame_main);
-		gtk_widget_show(databox);
-
-		// Parse the Definition
-
-		// count the number of items in the definition
-		while (def[num_items].label != NULL)
-		{
-			num_items++;
-		}
-
-
-		// allocate an array for the data label pointers.
-		// data_readout_labels[i] points to the label that
-		// contains a string representation of the value of
-		// the data element described by definition->mode1_def[i].
-		// where mode1_def[i] describes a seperator/label the value of
-		// data_readout_labels[i] is not defined.
-		// XXX need to free all the strings on exit, as well as this array..
-		aldl_gui_settings.data_readout_labels = g_malloc0((num_items)*sizeof(GtkWidget*));
-		GtkWidget *cur_vbox;
-		GtkWidget *cur_frame;
-		GtkWidget *cur_label;
-		GtkWidget *cur_table;
-
-		// until at the end of the items in the definition
-		for (i=0; def[i].label!=NULL; i++)
-		{
-			// if the item is a seperator
-			if (def[i].operation == ALDL_OP_SEPERATOR)
-			{
-				// make a new frame
-				cur_frame = gtk_frame_new(def[i].label);
-				gtk_box_pack_start(GTK_BOX(databox), cur_frame, FALSE, FALSE, 0);
-				gtk_widget_show(cur_frame);
-
-				// make a table for the data elements in the frame
-
-				// count how many elements there are until the next divider (or end of the definition)
-				for (row=0; (def[i+row+1].label!=NULL && def[i+row+1].operation !=ALDL_OP_SEPERATOR); row++)
-				{ /* do nothing (just count up rows)*/	}
-
-				cur_table = gtk_table_new(row,3,FALSE);
-
-				gtk_container_add(GTK_CONTAINER(cur_frame),cur_table);
-				gtk_widget_show(cur_table);
-
-				// reset row to zero so it can be used when putting items in the table
-				row=0; 
-			}
-
-			else // data item
-			{
-				// make a label for the data item's name
-				cur_label = gtk_label_new(def[i].label);
-				// make an alignment to align the label in the table
-				GtkWidget *align = gtk_alignment_new(0.0,0.0,0.0,0.0);
-
-				// add the label to the alignment, alignment to the current table
-				gtk_container_add(GTK_CONTAINER(align), cur_label);
-				gtk_table_attach_defaults(GTK_TABLE(cur_table), align, 0,1, row,row+1);
-				gtk_widget_show(cur_label);
-				gtk_widget_show(align);
-
-				// make a label for the data value
-				cur_label = gtk_label_new("N/A");
-				// make an alignment to align the label in the table
-				align = gtk_alignment_new(0.0,0.0,0.0,0.0);
-				// add the label to the alignment, alignment to the current table
-				gtk_container_add(GTK_CONTAINER(align), cur_label);
-				gtk_table_attach(GTK_TABLE(cur_table), align, 1,2, row,row+1,
-									GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND, 10, 0);
-				gtk_widget_show(cur_label);
-				gtk_widget_show(align);
-
-				// register the data value label with the data displays array
-				aldl_gui_settings.data_readout_labels[i] = cur_label;
-
-				// make a label for the units
-				cur_label = gtk_label_new(def[i].units);
-				// make an alignemnt to align the label in the box
-				align = gtk_alignment_new(0.0,0.0,0.0,0.0);
-				// add the label to the alignment, alignment to the current table
-				gtk_container_add(GTK_CONTAINER(align), cur_label);
-				gtk_table_attach_defaults(GTK_TABLE(cur_table), align, 2,3, row,row+1);
-				gtk_widget_show(cur_label);
-				gtk_widget_show(align);
-				
-				row++;
-			}
-		}
-
+	// if no definition selected, return without doing anything
+	if (aldl_settings.definition == NULL)
+	{
+		g_print("No definition selected. Cannot show data readout. Choose a definition first.\n");
+		return;
+	}
+	// if the Data Readout labels have been defined, no need to generate, just show the window
+	if (aldl_gui_settings.data_readout_labels != NULL)
+	{
 		linuxaldl_gui_widgetshow(widget,data);
+		return;
+	}
+
+	GtkWidget *vbox;
+	GtkWidget *databox;
+	GtkWidget *frame_main;
+	byte_def_t* def = aldl_settings.definition->mode1_def;
+	unsigned int i = 0, num_items=0, row=0;
+
+	vbox = gtk_vbox_new(FALSE,0);
+	gtk_container_add(GTK_CONTAINER(data), vbox);
+	frame_main = gtk_frame_new("ALDL Data");		
+	gtk_box_pack_start(GTK_BOX (vbox), frame_main, FALSE, FALSE, 0);
+
+	// the frame for each data seperator go in databox
+	databox = gtk_vbox_new(FALSE,0);
+	gtk_container_add(GTK_CONTAINER(frame_main), databox);
+
+	gtk_widget_show(vbox);
+	gtk_widget_show(frame_main);
+	gtk_widget_show(databox);
+
+	// Parse the Definition
+
+	// count the number of items in the definition
+	while (def[num_items].label != NULL)
+	{
+		num_items++;
+	}
+
+
+	// allocate an array for the data label pointers.
+	// data_readout_labels[i] points to the label that
+	// contains a string representation of the value of
+	// the data element described by definition->mode1_def[i].
+	// where mode1_def[i] describes a seperator/label the value of
+	// data_readout_labels[i] is not defined.
+	// XXX need to free all the strings on exit, as well as this array..
+	aldl_gui_settings.data_readout_labels = g_malloc0((num_items)*sizeof(GtkWidget*));
+	GtkWidget *cur_vbox;
+	GtkWidget *cur_frame;
+	GtkWidget *cur_label;
+	GtkWidget *cur_table;
+
+	// until at the end of the items in the definition
+	for (i=0; def[i].label!=NULL; i++)
+	{
+		// if the item is a seperator
+		if (def[i].operation == ALDL_OP_SEPERATOR)
+		{
+			// make a new frame
+			cur_frame = gtk_frame_new(def[i].label);
+			gtk_box_pack_start(GTK_BOX(databox), cur_frame, FALSE, FALSE, 0);
+			gtk_widget_show(cur_frame);
+
+			// make a table for the data elements in the frame
+
+			// count how many elements there are until the next divider (or end of the definition)
+			for (row=0; (def[i+row+1].label!=NULL && def[i+row+1].operation !=ALDL_OP_SEPERATOR); row++)
+			{ /* do nothing (just count up rows)*/	}
+
+			cur_table = gtk_table_new(row,3,FALSE);
+
+			gtk_container_add(GTK_CONTAINER(cur_frame),cur_table);
+			gtk_widget_show(cur_table);
+
+			// reset row to zero so it can be used when putting items in the table
+			row=0; 
+		}
+
+		else // data item
+		{
+			// make a label for the data item's name
+			cur_label = gtk_label_new(def[i].label);
+			// make an alignment to align the label in the table
+			GtkWidget *align = gtk_alignment_new(0.0,0.0,0.0,0.0);
+
+			// add the label to the alignment, alignment to the current table
+			gtk_container_add(GTK_CONTAINER(align), cur_label);
+			gtk_table_attach_defaults(GTK_TABLE(cur_table), align, 0,1, row,row+1);
+			gtk_widget_show(cur_label);
+			gtk_widget_show(align);
+
+			// make a label for the data value
+			cur_label = gtk_label_new("N/A");
+			// make an alignment to align the label in the table
+			align = gtk_alignment_new(0.0,0.0,0.0,0.0);
+			// add the label to the alignment, alignment to the current table
+			gtk_container_add(GTK_CONTAINER(align), cur_label);
+			gtk_table_attach(GTK_TABLE(cur_table), align, 1,2, row,row+1,
+					 GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND, 10, 0);
+			gtk_widget_show(cur_label);
+			gtk_widget_show(align);
+
+			// register the data value label with the data displays array
+			aldl_gui_settings.data_readout_labels[i] = cur_label;
+
+			// make a label for the units
+			cur_label = gtk_label_new(def[i].units);
+			// make an alignemnt to align the label in the box
+			align = gtk_alignment_new(0.0,0.0,0.0,0.0);
+			// add the label to the alignment, alignment to the current table
+			gtk_container_add(GTK_CONTAINER(align), cur_label);
+			gtk_table_attach_defaults(GTK_TABLE(cur_table), align, 2,3, row,row+1);
+			gtk_widget_show(cur_label);
+			gtk_widget_show(align);
+				
+			row++;
+		}
+	}
+
+	linuxaldl_gui_widgetshow(widget,data);
 }
 
 // ==================================
@@ -906,16 +903,16 @@ GtkWidget* linuxaldl_gui_choosedef_new()
 	// ---------------------------------------
 	dropdown = gtk_combo_new();
 	gtk_entry_set_text (GTK_ENTRY (GTK_COMBO (dropdown)->entry),
-						"No Definitions");
+			    "No Definitions");
 	
 	// Form the entries for the combo box
 	GList *deflist = NULL;
 	g_print("Loading definitions...\n");
-	g_print(" Found definitions: ");
+	g_print(" Found definitions:\n  ");
 	while (aldl_settings.aldl_definition_table[i] != NULL)
 	{
 		if (i!=0)
-			g_print(", ");
+			g_print("\n  ");
 		g_print("%s",aldl_settings.aldl_definition_table[i]->name);
 		deflist = g_list_append (deflist, (gpointer) aldl_settings.aldl_definition_table[i]->name);
 		i++;
@@ -942,17 +939,17 @@ GtkWidget* linuxaldl_gui_choosedef_new()
 	// "cancel" button
 	button = gtk_button_new_with_label("Cancel");
 	g_signal_connect(G_OBJECT(button), "clicked",
-					G_CALLBACK(linuxaldl_gui_widgethide), (gpointer) defwindow);
+			 G_CALLBACK(linuxaldl_gui_widgethide), (gpointer) defwindow);
 	gtk_container_add(GTK_CONTAINER (bbox), button);
 	gtk_widget_show(button);
 
 	// "select" button
 	button = gtk_button_new_with_label("Select");
 	g_signal_connect(G_OBJECT(button), "clicked",
-						G_CALLBACK(linuxaldl_gui_widgethide), (gpointer) defwindow);
+			 G_CALLBACK(linuxaldl_gui_widgethide), (gpointer) defwindow);
 	g_signal_connect(G_OBJECT(button), "clicked",
-						G_CALLBACK (linuxaldl_gui_load_definition),
-						GTK_ENTRY (GTK_COMBO (dropdown)->entry));
+			 G_CALLBACK (linuxaldl_gui_load_definition),
+			 GTK_ENTRY (GTK_COMBO (dropdown)->entry));
 	gtk_container_add(GTK_CONTAINER (bbox), button);
 	gtk_widget_show(button);
 
@@ -961,9 +958,6 @@ GtkWidget* linuxaldl_gui_choosedef_new()
 
 	return defwindow;	
 }
-
-
-
 
 // this function refreshes the aldl definition in aldl_settings when the user
 // presses the "select" button in the definition selection dialogue.
@@ -974,7 +968,7 @@ static void linuxaldl_gui_load_definition( GtkWidget *widget, gpointer data)
 	aldl_settings.aldldefname = gtk_entry_get_text (GTK_ENTRY (data));
 
 	// get the aldl definition address
-	aldl_settings.definition = aldl_get_definition(aldl_settings.aldldefname);
+	aldl_settings.definition = aldl_get_definition(aldl_settings.aldldefname, NULL);
 
 	// if no definition by that name exists, definition will be NULL
 	if (aldl_settings.definition == NULL)
@@ -986,9 +980,6 @@ static void linuxaldl_gui_load_definition( GtkWidget *widget, gpointer data)
 	g_print("Definition \"%s\" selected:\n",aldl_settings.definition->name);
 	g_print(" Mode 1 message has %d data bytes.\n",aldl_settings.definition->mode1_data_length);
 	
-
-
-
 	// allocate memory for the raw data array and zero it out
 	aldl_settings.data_set_raw = g_malloc0(aldl_settings.definition->mode1_data_length);
 	// allocate memory for the float array
@@ -1019,16 +1010,16 @@ static void linuxaldl_gui_load_definition( GtkWidget *widget, gpointer data)
 // background activity will continue.
 void quick_alert(gchar *message)
 {
-		GtkWidget *label, *content_area;
-		GtkWidget *dialog = gtk_dialog_new_with_buttons("Alert",NULL,
-						GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT |GTK_DIALOG_NO_SEPARATOR,
-						GTK_STOCK_OK, GTK_RESPONSE_DELETE_EVENT, NULL);
-		g_signal_connect_swapped(dialog, "response", G_CALLBACK (gtk_widget_destroy), dialog);
-		content_area = GTK_DIALOG(dialog)->vbox;
-		label = gtk_label_new(message);
-		gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-		gtk_box_pack_start(GTK_BOX(content_area),label,FALSE,FALSE,10);
-		gtk_widget_show_all(dialog);
+	GtkWidget *label, *content_area;
+	GtkWidget *dialog = gtk_dialog_new_with_buttons("Alert",NULL,
+							GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT |GTK_DIALOG_NO_SEPARATOR,
+							GTK_STOCK_OK, GTK_RESPONSE_DELETE_EVENT, NULL);
+	g_signal_connect_swapped(dialog, "response", G_CALLBACK (gtk_widget_destroy), dialog);
+	content_area = GTK_DIALOG(dialog)->vbox;
+	label = gtk_label_new(message);
+	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+	gtk_box_pack_start(GTK_BOX(content_area),label,FALSE,FALSE,10);
+	gtk_widget_show_all(dialog);
 }
 
 
@@ -1050,7 +1041,7 @@ GtkWidget* hscale_new_with_label(gdouble init_val, gdouble min, gdouble max, gdo
 	GtkObject* new_adj = gtk_adjustment_new(init_val, min, max, step, 0.0, 0.0);
 
 	g_signal_connect(G_OBJECT (new_adj), "value_changed",
-				     G_CALLBACK(changed), NULL);
+			 G_CALLBACK(changed), NULL);
 
 	GtkWidget* new_scale = gtk_hscale_new(GTK_ADJUSTMENT(new_adj));
 	gtk_scale_set_value_pos( GTK_SCALE(new_scale),GTK_POS_RIGHT );
