@@ -265,27 +265,31 @@ int get_mode1_message(char* inbuffer, unsigned int size)
 		return -1;
 	}
 
-	// put the mode 1 request message and checksum in the output buffer
-	memcpy(outbuffer,def->mode1_request,def->mode1_request_length-1);
-	outbuffer[def->mode1_request_length-1] = get_checksum(outbuffer,def->mode1_request_length-1);
+	/* Enter Mode1 if required */
+	if (def->mode1_request_length) {
+		// put the mode 1 request message and checksum in the output buffer
+		memcpy(outbuffer, def->mode1_request, def->mode1_request_length-1);
+		outbuffer[def->mode1_request_length-1] = get_checksum(outbuffer, def->mode1_request_length-1);
+		
+		// form the response message start sequence
+		char seq[] = { def->mode1_request[0], 0x52+def->mode1_response_length, 0x01};
+		
+		// flush the serial receive buffer
+		tcflush(aldl_settings.faldl,TCIFLUSH);
+		
+		// write the request to the serial interface
+		write(aldl_settings.faldl,&outbuffer,def->mode1_request_length); 
+		// wait for the bytes to be written
+		tcdrain(aldl_settings.faldl); 
 
-	// form the response message start sequence
-	char seq[] = { def->mode1_request[0], 0x52+def->mode1_response_length, 0x01};
-
-	// flush the serial receive buffer
-	tcflush(aldl_settings.faldl,TCIFLUSH);
-
-	// write the request to the serial interface
-	write(aldl_settings.faldl,&outbuffer,def->mode1_request_length); 
-
-	// wait for the bytes to be written
-	tcdrain(aldl_settings.faldl); 
-
-	// wait for response from ECM
-	// read sequence, 50msec timeout
-	res=read_sequence(aldl_settings.faldl, inbuffer, mode1_len,
-			  seq, 3, 0, 
-			  aldl_settings.scan_timeout*1000);
+		// wait for response from ECM
+		// read sequence, 50msec timeout
+		res=read_sequence(aldl_settings.faldl, inbuffer, mode1_len,
+				  seq, 3, 0, 
+				  aldl_settings.scan_timeout*1000);
+	} else {
+		// XXX what sequence to match for 160baud rate?
+	}
 
 	if (res<0) {
 		fprintf(stderr,"Error receiving mode1 message: %s\n",strerror(errno));
