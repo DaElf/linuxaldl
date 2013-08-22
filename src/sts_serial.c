@@ -108,8 +108,6 @@ int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size, l
 // following bytes up to count total bytes or the timeout occurs.
 //  count must be >= seq_size so the sequence can fit in the buffer.
 
-
-
 unsigned int convert_baudrate(speed_t baudrate);
 // returns the speed_t baudrate defined in <termios.h> in unsigned integer format
 // e.g. convert_baudrate(B57600) returns 57600

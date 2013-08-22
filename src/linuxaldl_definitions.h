@@ -42,16 +42,9 @@ LICENSING INFORMATION:
 
 // ===================================================================
 
-// see the DF definition below for a complete example of a definition
-
-
 // ==========================================
-//
 //   DF CODE MASK DEFINITION
 // Engine: 1991-1993 3.4 DOHC V6 (LQ1) Vin "X"
-//
-// aldl_definition_table entry: aldl_DF
-// mode1 definition table: aldl_DF_mode1
 // ===========================================
 byte_def_t aldl_DF_mode1[]= {
 	_DEF_SEP("---Basic Data---"),
@@ -97,24 +90,24 @@ byte_def_t aldl_DF_mode1[]= {
 byte_def_t aldl_9A_mode1[]= {
 	/* Label, offset, bits, operation, opfactor, opoffset, units */
 	_DEF_SEP("---Basic Data---"),
-	{"Engine RPM",		7,	8,	0,	25.0,		0.0,	"RPM"},  /* NTRPMX */
-	{"Vehicle Speed", 	5, 	8, 	0, 	1.0, 		0.0, 	"MPH"},  /* FILTMPH */
-	{"Throttle Position", 	22, 	8, 	0, 	0.39216, 	0.0, 	"%"},    /* NTPSLD */
+	{"Engine RPM",		8,	8,	0,	25.0,		0.0,	"RPM"},  /* NTRPMX */
+	{"Vehicle Speed", 	6, 	8, 	0, 	1.0, 		0.0, 	"MPH"},  /* FILTMPH */
+	{"Throttle Position", 	23, 	8, 	0, 	0.39216, 	0.0, 	"%"},    /* NTPSLD */
 	_DEF_SEP("----Fuel----"),
-	{"Integrator",		9, 	8,	0,	1.0,		0.0,	"counts"}, /* INT */
-	{"Narrowband O2",	10, 	8,	0,	4.425,		0.0,	"mV"},   /* ADO2A */
-	{"BLM",			18, 	8,	0,	1.0,		0.0,	"counts"}, /* BLM */
+	{"Integrator",		10, 	8,	0,	1.0,		0.0,	"counts"}, /* INT */
+	{"Narrowband O2",	11, 	8,	0,	4.425,		0.0,	"mV"},   /* ADO2A */
+	{"BLM",			19, 	8,	0,	1.0,		0.0,	"counts"}, /* BLM */
 	_DEF_SEP("--Ignition--"),
-	{"Knock Events",	17, 	8,	0,	1.0,		0.0,	"counts"}, /* OLDPA3 */
+	{"Knock Events",	18, 	8,	0,	1.0,		0.0,	"counts"}, /* OLDPA3 */
 	_DEF_SEP("--Accessory Data--"),
-	{"PROM ID",		1, 	16,	0,	1.0,		0.0,	"ID"},    /* PROMIDA + PROMIDB */
-	{"TPS Voltage",	 	8, 	8, 	0, 	0.019608, 	0.0, 	"volts"}, /* ADTHROT */
-	{"IAC Steps",		3, 	8,	0,	1.0,		0.0,	"steps"}, /* ISSPNP */
-	{"MAP Voltage",		6, 	8,	0,	0.019608,	0.0,	"volts"}, /* ADMAP */
-	{"Battery Voltage",	15,	8,	0,	0.1,		0.0,	"volts"}, /* ADBAT */
-	{"O2 Cross-Count",	19,	8,	0,	1.0,		0.0,	"counts"}, /* ALDLCNTR */
-	{"Fuel Pump Relay Volts", 20,	8,	0,	0.1,		0.0,	"volts"}, /* PPSWVLT */
-	{"Desired Idle Speed",	21,	8, 	0,	12.5,		0.0,	"RPM"}, /* DESSPD */
+	{"PROM ID",		2, 	16,	0,	1.0,		0.0,	"ID"},    /* PROMIDA + PROMIDB */
+	{"IAC Steps",		4, 	8,	0,	1.0,		0.0,	"steps"}, /* ISSPNP */
+	{"MAP Voltage",		7, 	8,	0,	0.019608,	0.0,	"volts"}, /* ADMAP */
+	{"TPS Voltage",	 	9, 	8, 	0, 	0.019608, 	0.0, 	"volts"}, /* ADTHROT */
+	{"Battery Voltage",	16,	8,	0,	0.1,		0.0,	"volts"}, /* ADBAT */
+	{"O2 Cross-Count",	20,	8,	0,	1.0,		0.0,	"counts"}, /* ALDLCNTR */
+	{"Fuel Pump Relay Volts", 21,	8,	0,	0.1,		0.0,	"volts"}, /* PPSWVLT */
+	{"Desired Idle Speed",	22,	8, 	0,	12.5,		0.0,	"RPM"}, /* DESSPD */
 	LINUXALDL_MODE1_END_DEF
 };
 /* ADCOOL (table), MW2, MALFFLG1, MALFFLG2, MALFFLG3, MWAF1, MCU2IO (all bitmasks!) */
@@ -126,25 +119,18 @@ aldl_definition aldl_DF = { "DF", "91-93 3.4 DOHC LQ1 ($DF)",
 			    B9600, 8192,
 };
 
-aldl_definition aldl_9A = { "9A", "92-94 L03/L05 Truck (VIN H/K) w/MT ($9A)",
-			    {0x00}, 0, 27, 23, 3, aldl_9A_mode1,  /* Mode1 only */
-			    {0x00}, 0,
-			    {0x00}, 0,
-			    B4800, 160,
+aldl_definition aldl_9A = { .mask = "9A",
+			    .name = "92-94 L03/L05 Truck (VIN H/K) w/MT ($9A)",
+			    .mode1_response_length = 24,
+			    .mode1_data_length = 23,
+			    .mode1_data_offset = 1,
+			    .mode1_def = aldl_9A_mode1,
+			    .basic_baudrate = B4800,
+			    .ideal_baudrate = 160,
 };
-// ===========================================
-//  End DF code mask definition
-// ===========================================
 
-
-// =================================================================================
-// Definition table -- pointers to each definition must be in this table to use them
-// =================================================================================
-//   aldl_get_definition() uses this table to find the definition corresponding 
-//   to the string given at the command line for the mask= argument.
-//   the gui uses this table to make the list of definitions.
-//   the last entry must be NULL.
-aldl_definition* aldl_definition_table[] = { &aldl_DF, &aldl_9A, NULL };
+/* Definition table */
+aldl_definition* aldl_definition_table[] = { &aldl_9A, &aldl_DF, NULL };
 
 
 #endif
