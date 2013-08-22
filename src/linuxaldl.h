@@ -32,11 +32,11 @@ LICENSING INFORMATION:
 
 #define __MAX_REQUEST_SIZE 16 /* maximum size (bytes) of a request message to send to the ECM */
 
-#define LINUXALDL_MODE1_END_DEF {NULL,0,0,0,0,0,NULL}
-
-typedef enum _ALDL_OP { ALDL_OP_MULTIPLY=0, ALDL_OP_DIVIDE=1, ALDL_OP_SEPERATOR=9} ALDL_OP_t;
-
-#define _DEF_SEP(label) {label,0,0,ALDL_OP_SEPERATOR,0,0,NULL}
+enum ALDL_OP { ALDL_OP_SCALAR=0,
+	       ALDL_OP_MAP,
+	       ALDL_OP_BIT,
+	       ALDL_OP_SEPERATOR,
+};
 
 // ============================================================================
 // ALDL DEFINITION STRUCTS
@@ -48,23 +48,54 @@ typedef enum _ALDL_OP { ALDL_OP_MULTIPLY=0, ALDL_OP_DIVIDE=1, ALDL_OP_SEPERATOR=
 // byte_def_t struct
 typedef struct _linuxaldl_byte_definition{
 	const char* label;
-	unsigned int byte_offset; /* Offset from the 1st byte of the data part of the mode1 message */
-	unsigned int bits; /* 8 or 16 are currently supported */
-	unsigned int operation; // ALDL_OP_MULTIPLY: (X*factor)+offest
-				// ALDL_OP_DIVIDE: (factor/X)+offset
-				// ALDL_OP_SEPERATOR: use this for a seperator for the display,
-				//    not a data item.  with this option no other
-				//	  values matter except label.
-				//	  you can also use the _DEF_SEP(label) macro like:
-				//	  _DEF_SEP("---Basic Data---")
-
+	unsigned char byte_offset; /* Offset from the 1st byte of the data part of the mode1 message */
+	unsigned char bits; /* 8 or 16 are currently supported */
+	enum ALDL_OP operation;
+#if 0
+	union {
+		struct { /* (val*factor)+offset */
+			float factor;
+			float offset;
+			const char* units; /* Text string */
+		} scalar;
+		struct {
+			unsigned char bit;
+			const char *set;   /* Display if set */
+			const char *unset; /* Display if not set*/
+		} bit;
+	} op;
+#endif
 	float op_factor; // factor for the operation
 	float op_offset; // offset for the operation
-
 	const char* units; /* Text string */
 } byte_def_t;
 
-typedef struct _linuxaldl_definition{
+#define ALDL_DEF_SCALAR8(__label, __offset, __factor, __shift, __units ) \
+	{ .label = __label, \
+	  .byte_offset = __offset, \
+	  .bits = 8, \
+	  .operation = ALDL_OP_SCALAR, \
+	  .op_factor = __factor, \
+	  .op_offset = __shift,	\
+	  .units = __units, \
+       	}
+#define ALDL_DEF_SCALAR16(__label, __offset, __factor, __shift, __units ) \
+	{ .label = __label, \
+	  .byte_offset = __offset, \
+	  .bits = 16, \
+	  .operation = ALDL_OP_SCALAR, \
+	  .op_factor = __factor, \
+	  .op_offset = __shift,	\
+	  .units = __units, \
+       	}
+#define ALDL_DEF_SEPERATOR(__label) \
+	{ .label = __label, \
+	  .operation = ALDL_OP_SEPERATOR, \
+	}
+#define ALDL_DEF_END { .label = NULL }
+
+
+typedef struct _linuxaldl_definition {
 	const char* mask;
 	const char* name;
 	char mode1_request[__MAX_REQUEST_SIZE];  // the mode 1 request message, including the checksum
@@ -171,16 +202,5 @@ void aldl_update_sets(int flags);
 // if the flags argument is ALDL_UPDATE_STRINGS then both sets will be updated.
 // if it is ALDL_UPDATE_FLOATS then only floats will be updated, and the data_set_strings
 // array will not be modified in any way.
-
-float aldl_raw8_to_float(unsigned char val, int operation, float op_factor, float op_offset);
-// converts the raw 8-bit data value val into a float by performing operation
-// using op_factor and op_offset.
-// see the documentation for the byte_def_t struct for more information
-
-
-float aldl_raw16_to_float(unsigned char msb, unsigned char lsb, int operation, float op_factor, float op_offset);
-// converts the raw 16-bit data value defined by lsb and msb into a float by performing operation
-// using op_factor and op_offset.
-// see the documentation for the byte_def_t struct for more information
 
 #endif
