@@ -500,12 +500,9 @@ static void linuxaldl_gui_scan( GtkWidget *widget, gpointer data)
 
 
 		// check to see if a data set for the display has been allocated
-		if (aldl_settings.data_set_raw == NULL)
-		{
+		if (aldl_settings.data_set_raw == NULL) {
 			g_warning("Data set labels not initialized. Display and .csv log files will not be updated. \n");
-		}
-		else
-		{
+		} else {
 			// copy the data to the current data set
 			memcpy(	  aldl_settings.data_set_raw,
 				  inbuffer + aldl_settings.definition->mode1_data_offset,
@@ -519,13 +516,11 @@ static void linuxaldl_gui_scan( GtkWidget *widget, gpointer data)
 		}
 
 		// if a log file has been selected
-		if (aldl_settings.flogfile!=1)
-		{
+		if (aldl_settings.flogfile!=1) {
 			// ALDL_LOG_RAW
 			// ============
 			// raw format just dumps the timestamp and entire mode1 message to a file
-			if (aldl_gui_settings.log_format == ALDL_LOG_RAW)
-			{
+			if (aldl_gui_settings.log_format == ALDL_LOG_RAW) {
 				// note: this writes the integer timestamp using the endianness of the platform this
 				// process is running on. this means if the log file is read back using a platform
 				// with a different endianness, the timestamps will be incorrect.
@@ -726,8 +721,7 @@ static void linuxaldl_gui_write_csv_line()
 			(float)aldl_gui_settings.data_timestamp.tv_usec/1000000.0);
 
 		// until at the end of the items in the definition...
-		for (i=0; def[i].label!=NULL; i++)
-		{
+		for (i=0; def[i].label!=NULL; i++) {
 			// if the item is not a seperator, write the string
 			if (def[i].operation != ALDL_OP_SEPERATOR)
 				fprintf(aldl_gui_settings.slogfile,",%s",aldl_settings.data_set_strings[i]);
@@ -918,8 +912,8 @@ static void linuxaldl_gui_datareadout_show(GtkWidget* widget, gpointer data)
 	for (i=0; def[i].label!=NULL; i++)
 	{
 		// if the item is a seperator
-		if (def[i].operation == ALDL_OP_SEPERATOR)
-		{
+		switch (def[i].operation) {
+		case ALDL_OP_SEPERATOR:
 			// make a new frame
 			cur_frame = gtk_frame_new(def[i].label);
 			gtk_box_pack_start(GTK_BOX(databox), cur_frame, FALSE, FALSE, 0);
@@ -938,14 +932,14 @@ static void linuxaldl_gui_datareadout_show(GtkWidget* widget, gpointer data)
 
 			// reset row to zero so it can be used when putting items in the table
 			row=0; 
-		}
-
-		else // data item
-		{
-			// make a label for the data item's name
-			cur_label = gtk_label_new(def[i].label);
+			break;
+		case ALDL_OP_SCALAR:
+		case ALDL_OP_MAP:
+		case ALDL_OP_BIT: {
 			// make an alignment to align the label in the table
 			GtkWidget *align = gtk_alignment_new(0.0,0.0,0.0,0.0);
+			// make a label for the data item's name
+			cur_label = gtk_label_new(def[i].label);
 
 			// add the label to the alignment, alignment to the current table
 			gtk_container_add(GTK_CONTAINER(align), cur_label);
@@ -967,17 +961,25 @@ static void linuxaldl_gui_datareadout_show(GtkWidget* widget, gpointer data)
 			// register the data value label with the data displays array
 			aldl_gui_settings.data_readout_labels[i] = cur_label;
 
-			// make a label for the units
-			cur_label = gtk_label_new(def[i].units);
-			// make an alignemnt to align the label in the box
-			align = gtk_alignment_new(0.0,0.0,0.0,0.0);
-			// add the label to the alignment, alignment to the current table
-			gtk_container_add(GTK_CONTAINER(align), cur_label);
-			gtk_table_attach_defaults(GTK_TABLE(cur_table), align, 2,3, row,row+1);
-			gtk_widget_show(cur_label);
-			gtk_widget_show(align);
+			/* Only show units when it's not a bit field */
+			if (def[i].operation != ALDL_OP_BIT) {
+				// make a label for the units
+				cur_label = gtk_label_new(def[i].units);
+				// make an alignemnt to align the label in the box
+				align = gtk_alignment_new(0.0,0.0,0.0,0.0);
+				// add the label to the alignment, alignment to the current table
+				gtk_container_add(GTK_CONTAINER(align), cur_label);
+				gtk_table_attach_defaults(GTK_TABLE(cur_table), align, 2,3, row,row+1);
+				gtk_widget_show(cur_label);
+				gtk_widget_show(align);
+			}
 				
 			row++;
+			break;
+		}
+		default:
+			// XXX log some sort of error?
+			break;
 		}
 	}
 
