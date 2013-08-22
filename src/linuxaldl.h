@@ -51,30 +51,23 @@ typedef struct _linuxaldl_byte_definition{
 	unsigned char byte_offset; /* Offset from the 1st byte of the data part of the mode1 message */
 	unsigned char bits; /* 8 or 16 are currently supported */
 	enum ALDL_OP operation;
-#if 0
-	union {
-		struct { /* (val*factor)+offset */
-			float factor;
-			float offset;
-			const char* units; /* Text string */
-		} scalar;
-		struct {
-			unsigned char bit;
-			const char *set;   /* Display if set */
-			const char *unset; /* Display if not set*/
-		} bit;
-	} op;
-#endif
+
 	float op_factor; // factor for the operation
 	float op_offset; // offset for the operation
 	const char* units; /* Text string */
+
+	const float map[256];
+
+	unsigned char b_bit;
+	const char *b_set;
+	const char *b_unset;
 } byte_def_t;
 
 #define ALDL_DEF_SCALAR8(__label, __offset, __factor, __shift, __units ) \
 	{ .label = __label, \
 	  .byte_offset = __offset, \
-	  .bits = 8, \
 	  .operation = ALDL_OP_SCALAR, \
+	  .bits = 8, \
 	  .op_factor = __factor, \
 	  .op_offset = __shift,	\
 	  .units = __units, \
@@ -82,11 +75,28 @@ typedef struct _linuxaldl_byte_definition{
 #define ALDL_DEF_SCALAR16(__label, __offset, __factor, __shift, __units ) \
 	{ .label = __label, \
 	  .byte_offset = __offset, \
-	  .bits = 16, \
 	  .operation = ALDL_OP_SCALAR, \
+	  .bits = 16, \
 	  .op_factor = __factor, \
 	  .op_offset = __shift,	\
 	  .units = __units, \
+       	}
+#define ALDL_DEF_MAP8(__label, __offset, __map, __units ) \
+	{ .label = __label, \
+	  .byte_offset = __offset, \
+	  .operation = ALDL_OP_MAP, \
+	  .bits = 8, \
+	  .map = __map,	\
+	  .units = __units, \
+       	}
+#define ALDL_DEF_BIT(__label, __offset, __bit, __set, __unset ) \
+	{ .label = __label, \
+	  .byte_offset = __offset, \
+	  .operation = ALDL_OP_BIT, \
+	  .bits = 8, \
+	  .b_bit = __bit, \
+	  .b_set = __set, \
+	  .b_unset = __unset, \
        	}
 #define ALDL_DEF_SEPERATOR(__label) \
 	{ .label = __label, \

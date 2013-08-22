@@ -29,9 +29,9 @@
 #include <string.h> // for memcpy
 #include <errno.h>
 #include "linuxaldl.h"
+#include "sts_serial.h"
 #include "linuxaldl_definitions.h"
 #include "linuxaldl_gui.h"
-#include "sts_serial.h"
 
 // global variables
 // =================================================
@@ -254,7 +254,6 @@ int send_aldl_message(char* msg_buf, unsigned int size)
 int get_mode1_message(char* inbuffer, unsigned int size)
 {
 	int res;
-	char checkval;
 	char outbuffer[__MAX_REQUEST_SIZE]; // max request size defined in linuxaldl_definitions.h
 
 	aldl_definition* def = aldl_settings.definition;
@@ -372,88 +371,90 @@ void aldl_update_sets(int flags)
 	unsigned int i=0;
 	byte_def_t* defs = aldl_settings.definition->mode1_def;
 	byte_def_t* cur_def;
-	float converted_val;
-	char* new_data_string=NULL;
 
-	while (defs[i].label != NULL) { // while not at the last defined byte
+	for (i = 0 ; defs[i].label ; i++) {
 		cur_def = defs+i;
-		// if the item is a seperator, skip it
-		if (cur_def->operation == ALDL_OP_SEPERATOR) {
-			i++;
+
+		switch (cur_def->operation) {
+		case ALDL_OP_SCALAR: {
+			float converted_val;
+			char *new_data_string = NULL;
+
+			if (cur_def->bits == 8) {
+				converted_val = (((float)aldl_settings.data_set_raw[cur_def->byte_offset-1]) * cur_def->op_factor) + cur_def->op_offset;
+			} else if (cur_def->bits == 16) {
+				converted_val = ((float)aldl_settings.data_set_raw[cur_def->byte_offset-1]) * 256 + ((float)aldl_settings.data_set_raw[cur_def->byte_offset]);
+				converted_val = (converted_val*cur_def->op_factor) + cur_def->op_offset;
+			} else {
+				// XXX log some sort of error for non 8/16bpp?
+				continue;
+			}
+			if ((flags & ALDL_UPDATE_FLOATS) && aldl_settings.data_set_floats != NULL)
+				aldl_settings.data_set_floats[i] = converted_val;
+			
+			// convert the result to a string
+			if ((flags & ALDL_UPDATE_STRINGS) && aldl_settings.data_set_strings != NULL) {
+				new_data_string=malloc(10); // allocate ten bytes for the string
+				snprintf(new_data_string,10,"%.1f",converted_val); // convert the floating point value to a string
+				// if there is currently a string registered, free it
+				if (aldl_settings.data_set_strings[i] != NULL)
+					free(aldl_settings.data_set_strings[i]);
+				
+				// register the new string in the table
+				aldl_settings.data_set_strings[i] = new_data_string;
+			}
+			break;
+		}
+		case ALDL_OP_MAP: {
+			float converted_val;
+			char *new_data_string = NULL;
+
+			if (cur_def->bits == 8) {
+				converted_val = cur_def->map[(unsigned char)aldl_settings.data_set_raw[cur_def->byte_offset-1]];
+			} else {
+				// XXX log some sort of error for non-8bpp?
+				continue;
+			}
+			if ((flags & ALDL_UPDATE_FLOATS) && aldl_settings.data_set_floats != NULL)
+				aldl_settings.data_set_floats[i] = converted_val;
+			
+			// convert the result to a string
+			if ((flags & ALDL_UPDATE_STRINGS) && aldl_settings.data_set_strings != NULL) {
+				new_data_string=malloc(10); // allocate ten bytes for the string
+				snprintf(new_data_string,10,"%.1f",converted_val); // convert the floating point value to a string
+				// if there is currently a string registered, free it
+				if (aldl_settings.data_set_strings[i] != NULL)
+					free(aldl_settings.data_set_strings[i]);
+				
+				// register the new string in the table
+				aldl_settings.data_set_strings[i] = new_data_string;
+			}
+			break;
+		}
+		case ALDL_OP_BIT:
+			if (flags & ALDL_UPDATE_FLOATS) {
+				aldl_settings.data_set_floats[i] = (aldl_settings.data_set_raw[cur_def->byte_offset-1] & cur_def->b_bit) ? 1 : 0;
+			} 
+			if (flags & ALDL_UPDATE_STRINGS) {
+				// if there is currently a string registered, free it
+				if (aldl_settings.data_set_strings[i] != NULL)
+					free(aldl_settings.data_set_strings[i]);
+				// register the new string in the table
+				aldl_settings.data_set_strings[i] = strdup((aldl_settings.data_set_raw[cur_def->byte_offset-1] & cur_def->b_bit) ? cur_def->b_set : cur_def->b_unset);
+			}
+
+			break;
+		case ALDL_OP_SEPERATOR:
+			break; /* Deliberately ignore this */
+		default:
+			// XXX log some sort of error here?
 			continue;
 		}
 
-		// convert the raw data to a float based on the byte definition
-		if (cur_def->bits==8) {
-			converted_val = aldl_raw8_to_float(aldl_settings.data_set_raw[cur_def->byte_offset-1],
-							   cur_def->operation, cur_def->op_factor, cur_def->op_offset);
-											
-		} else if (cur_def->bits==16) {
-			converted_val = aldl_raw16_to_float(aldl_settings.data_set_raw[cur_def->byte_offset-1],
-							    aldl_settings.data_set_raw[cur_def->byte_offset],
-							    cur_def->operation, cur_def->op_factor, cur_def->op_offset);
-		} else { // other numbers of bits not supported
-			i++;
-			continue;
-		}
 
-		if ((flags & ALDL_UPDATE_FLOATS) && aldl_settings.data_set_floats != NULL)
-			aldl_settings.data_set_floats[i] = converted_val;
-
-		// convert the result to a string
-		if ((flags & ALDL_UPDATE_STRINGS) && aldl_settings.data_set_strings != NULL) {
-			new_data_string=malloc(10); // allocate ten bytes for the string
-
-			snprintf(new_data_string,10,"%.1f",converted_val); // convert the floating point value to a string
-
-			// if there is currently a string registered, free it
-			if (aldl_settings.data_set_strings[i] != NULL)
-				free(aldl_settings.data_set_strings[i]);
-
-			// register the new string in the table
-			aldl_settings.data_set_strings[i] = new_data_string;
-		}
 
 		//fprintf(stderr,"Updating element %s\n",cur_def->label);
-		i++;
 	}
 }
 
-// converts the raw 8-bit data value val into a float by performing operation
-// using op_factor and op_offset.
-// see the documentation for the byte_def_t struct in linuxaldl.h for more information
-float aldl_raw8_to_float(unsigned char val, int operation, float op_factor, float op_offset)
-{
-	float result = val;
-	if (operation == ALDL_OP_MULTIPLY)
-		result = ((float)val*op_factor)+op_offset;
-	else if (operation == ALDL_OP_DIVIDE)
-		result = (op_factor/val)+op_offset;
-	else {
-		result = -999;
-		fprintf(stderr," aldl_raw_to_float8() error: undefined operation: %d",operation);
-	}
-
-	return result;
-
-}
-
-
-// converts the raw 16-bit data value val into a float by performing operation
-// using op_factor and op_offset.
-// see the documentation for the byte_def_t struct in linuxaldl.h for more information
-float aldl_raw16_to_float(unsigned char msb, unsigned char lsb, int operation, float op_factor, float op_offset)
-{
-	float result = ((float)msb*256)+(float)lsb;
-	if (operation == ALDL_OP_MULTIPLY)
-		result = (result*op_factor)+op_offset;
-	else if (operation == ALDL_OP_DIVIDE)
-		result = (op_factor/result)+op_offset;
-	else {
-		result = -999.0;
-		fprintf(stderr," aldl_raw_to_float16() error: undefined operation: %d",operation);
-	}
-	return result;
-
-}
 
