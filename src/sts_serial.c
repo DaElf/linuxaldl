@@ -201,8 +201,8 @@ typedef void (*sighandler_t)(int);
 // restored to its original state.
 int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size, long secs, long usecs)
 {
-	unsigned int seq_matched = 0, bytes_read = 0, i;
-	int res, retval = 0;
+	unsigned int seq_matched = 0, bytes_read = 0;
+	int i, res, retval = 0;
 
 	size_t seqbuf_size = count;
 	char* seqbuf = malloc(seqbuf_size);
@@ -254,7 +254,6 @@ int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size, l
 		}
 		else // if the sequence hasn't been matched...
 		{
-			
 			res = read(fd, seqbuf, seqbuf_size);
 			if (res==0)
 				continue;
