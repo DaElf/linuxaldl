@@ -56,7 +56,7 @@ typedef struct _linuxaldl_byte_definition{
 	float op_offset; // offset for the operation
 	const char* units; /* Text string */
 
-	const float map[256];
+	const float *map;
 
 	unsigned char b_bit;
 	const char *b_set;

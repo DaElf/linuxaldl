@@ -80,9 +80,104 @@ byte_def_t aldl_DF_mode1[]= {
 	ALDL_DEF_END,
 };
 
+aldl_definition aldl_DF = { .mask = "DF",
+			    .name = "91-93 3.4 DOHC LQ1 ($DF)",
+			    .mode1_request = {0xF4, 0x57, 0x01, 0x00, 0xB4},
+			    .mode1_request_length = 5, 
+			    .mode1_response_length = 67,
+			    .mode1_data_length = 63,
+			    .mode1_data_offset = 3,
+			    .mode1_def = aldl_DF_mode1,
+			    .mode8_request = {0xF4, 0x56, 0x08, 0xAE},
+			    .mode8_request_length = 4,
+			    .mode9_request = {0xF4, 0x56, 0x09, 0xAD},
+			    .mode9_request_length = 4,
+			    .basic_baudrate = B9600,
+			    .ideal_baudrate = 8192,
+};
+
+
+// ==========================================
+//   9A CODE MASK DEFINITION
+// Engine: 1992-1994 5.0/5.7L V8 (L03/L05) Vin H/K
+// ===========================================
+const float map_9A_ADCOOL[256] = {
+	[0] = 200,
+//	[1 .. 11] = -999,
+	[12] = 150,
+	[13] = 145,
+	[14] = 140,
+//	[15] = -999,
+	[16] = 135,
+//	[17] = -999,
+	[18] = 130,
+//	[19 .. 20] = -999,
+	[21] = 125,
+//	[22] = -999,
+	[23] = 120,
+//	[24 .. 25] = -999,
+	[26] = 115,
+//	[27 .. 29] = -999,
+	[30] = 110,
+//	[31 .. 33] = -999,
+	[34] = 105,
+//	[35 .. 38] = -999,
+	[39] = 100,
+//	[40 .. 43] = -999,
+	[44] = 95,
+//	[45 .. 49] = -999,
+	[50] = 90,
+//	[51 .. 55] = -999,
+	[56] = 85,
+//	[57 .. 63] = -999,
+	[64] = 80,
+//	[65 .. 71] = -999,
+	[72] = 75,
+//	[73 .. 80] = -999,
+	[81] = 70,
+//	[82 .. 91] = -999,
+	[92] = 65,
+//	[92 .. 101] = -999,
+	[102] = 60,
+//	[103 .. 113] = -999,
+	[114] = 55,
+	[126] = 50,
+	[139] = 45,
+	[152] = 40,
+	[165] = 35,
+	[177] = 30,
+//	[178 .. 188] = -999,
+	[189] = 25,
+//	[190 .. 198] = -999,
+	[199] = 20,
+//	[200 .. 208] = -999,
+	[209] = 15,
+//	[210 .. 217] = -999,
+	[218] = 10,
+//	[219 .. 224] = -999,
+	[225] = 5,
+//	[226 .. 230] = -999,
+	[231] = 0,
+//	[233 .. 236] = -999,
+	[237] = -5,
+//	[237 .. 240] = -999,
+	[241] = -10,
+//	[242 .. 244] = -999,
+	[245] = -15,
+//	[246] = -999,
+	[247] = -20,
+//	[248 .. 249] = -999,
+	[250] = -25,
+	[251] = -30,
+//	[252] = -999,
+	[253] = -40,
+//	[254 .. 255] = -999,
+};
+
 byte_def_t aldl_9A_mode1[]= {
 	/* Label, offset, bits, operation, opfactor, opoffset, units */
 	ALDL_DEF_SEPERATOR("---Basic Data---"),
+	ALDL_DEF_MAP8("Coolant Temperature", 6, map_9A_ADCOOL, "Deg C"), /* ADCOOL */
 	ALDL_DEF_SCALAR8("Vehicle Speed", 6, 1.0, 0.0, "MPH"), /* FILTMPH */
 	ALDL_DEF_SCALAR8("Engine RPM", 8, 25.0, 0.0, "RPM"), /* NTRPMX */
 	ALDL_DEF_SCALAR8("Throttle Position", 23, 0.39216, 0.0, "%"), /* NTPSLD */
@@ -101,24 +196,56 @@ byte_def_t aldl_9A_mode1[]= {
 	ALDL_DEF_SCALAR8("O2 Cross-Count", 20, 1.0, 0.0, "counts"), /* ALDLCNTR */
 	ALDL_DEF_SCALAR8("Fuel Pump Relay Voltage", 21, 0.1, 0.0, "volts"), /* PPSWVLT */
 	ALDL_DEF_SCALAR8("Desired Idle Speed", 22, 12.5, 0.0, "RPM"), /* DESSPD */
+	ALDL_DEF_SEPERATOR("--Signal Bits--"),
+	ALDL_DEF_BIT("Road Speed Pulse", 1, 0, "Present", "Not Present"), /* MW2 B0 */
+	ALDL_DEF_BIT("O/L Idle Flag", 1, 1, "Set", "Not Set"), /* MW2 B1 */
+	ALDL_DEF_BIT("Reference Pulse", 1, 2, "Present", "Not Present"), /* MW2 B2 */
+	ALDL_DEF_BIT("Diag Switch in Factory Test (3.9K Ohm)", 1, 3, "Set", "Not Set"), /* MW2 B3 */
+	ALDL_DEF_BIT("Diag Switch in Diag (0 Ohm)", 1, 4, "Set", "Not Set"), /* MW2 B4 */
+	ALDL_DEF_BIT("Diag Switch in ALDL (10K Ohm)", 1, 5, "Set", "Not Set"), /* MW2 B5 */
+	ALDL_DEF_BIT("1st Time Idle", 1, 6, "1st Time", "Regular"), /* MW2 B6 */
+	ALDL_DEF_BIT("Idle Flag", 1, 7, "Set", "Not Set"), /* MW2 B7 */
+	ALDL_DEF_BIT("Air Switch", 17, 0, "Engaged", "Not Engaged"), /* MCU2IO B0 */
+	ALDL_DEF_BIT("Air Divert", 17, 1, "Engaged", "Not Engaged"), /* MCU2IO B1 */
+	ALDL_DEF_BIT("OF3 Governor Over Speed", 17, 2, "On", "Off"), /* MCU2IO B2 */
+	ALDL_DEF_BIT("Torque Converter Locked/Shift Light (!93)", 17, 3, "Yes", "No"), /* MCU2IO B3 */
+	ALDL_DEF_BIT("Park/Neutral", 17, 4, "Yes", "Drive"), /* MCU2IO B4 */
+	ALDL_DEF_BIT("High Gear", 17, 5, "No", "Yes"), /* MCU2IO B5 */
+	ALDL_DEF_BIT("FRTH (?)", 17, 6, "Set", "Not Set"), /* MCU2IO B6 */
+	ALDL_DEF_BIT("Air Conditioner Request", 17, 7, "Not Set", "Set"), /* MCU2IO B7 */
+	ALDL_DEF_BIT("Clear Flood Flag", 15, 0, "Set", "Not Set"), /* MWAF1 B0 */
+	ALDL_DEF_BIT("Learn Control Enable", 15, 1, "Set", "Not Set"), /* MWAF1 B1 */
+	ALDL_DEF_BIT("Low Battery", 15, 2, "Yes", "No"), /* MWAF1 B2 */
+	ALDL_DEF_BIT("A/F Decay Interrupt Done", 15, 3, "Set", "Not Set"), /* MWAF1 B3 */
+	ALDL_DEF_BIT("Async Pulse Flag", 15, 4, "Set", "Not Set"), /* MWAF1 B4 */
+	ALDL_DEF_BIT("Closed Loop for Idle", 15, 5, "Set", "Not Set"), /* MWAF1 B5 */
+	ALDL_DEF_BIT("Rich/Lean Flag", 15, 6, "Rich", "Lean"), /* MWAF1 B6 */
+	ALDL_DEF_BIT("Closed/Open Loop Flag", 15, 7, "Closed", "Open"), /* MWAF1 B7 */
+	ALDL_DEF_BIT("Malf Code 24", 12, 0, "VSS", ""), /* MALFFLG1 B0 */
+	ALDL_DEF_BIT("Malf Code 23", 12, 1, "Unused", ""), /* MALFFLG1 B1 */
+	ALDL_DEF_BIT("Malf Code 22", 12, 2, "TPS Low", ""), /* MALFFLG1 B2 */
+	ALDL_DEF_BIT("Malf Code 21", 12, 3, "TPS High", ""), /* MALFFLG1 B3 */
+	ALDL_DEF_BIT("Malf Code 15", 12, 4, "CT Low", ""), /* MALFFLG1 B4 */
+	ALDL_DEF_BIT("Malf Code 14", 12, 5, "CT High", ""), /* MALFFLG1 B5 */
+	ALDL_DEF_BIT("Malf Code 13", 12, 6, "O2 Sensor", ""), /* MALFFLG1 B6 */
+	ALDL_DEF_BIT("Malf Code 12", 12, 7, "No Ref Pulse", ""), /* MALFFLG1 B7 */
+	ALDL_DEF_BIT("Malf Code 42", 13, 0, "EST Monitor", ""), /* MALFFLG2 B0 */
+	ALDL_DEF_BIT("Malf Code 41", 13, 1, "Unused", ""), /* MALFFLG2 B1 */
+	ALDL_DEF_BIT("Malf Code 35", 13, 2, "Unused", ""), /* MALFFLG2 B2 */
+	ALDL_DEF_BIT("Malf Code 34", 13, 3, "MAP Sensor Low", ""), /* MALFFLG2 B3 */
+	ALDL_DEF_BIT("Malf Code 33", 13, 4, "MAP Sensor High", ""), /* MALFFLG2 B4 */
+	ALDL_DEF_BIT("Malf Code 32", 13, 5, "EGR", ""), /* MALFFLG2 B5 */
+	ALDL_DEF_BIT("Malf Code 31", 13, 6, "Unused", ""), /* MALFFLG2 B6 */
+	ALDL_DEF_BIT("Malf Code 25", 13, 7, "Unused", ""), /* MALFFLG2 B7 */
+	ALDL_DEF_BIT("Malf Code 55", 14, 0, "ADU", ""), /* MALFFLG3 B0 */
+	ALDL_DEF_BIT("Malf Code 54", 14, 1, "Fuel Pump", ""), /* MALFFLG3 B1 */
+	ALDL_DEF_BIT("Malf Code 53", 14, 2, "Unused", ""), /* MALFFLG3 B2 */
+	ALDL_DEF_BIT("Malf Code 52", 14, 3, "CAL-PACK", ""), /* MALFFLG3 B3 */
+	ALDL_DEF_BIT("Malf Code 51", 14, 4, "PROM", ""), /* MALFFLG3 B4 */
+	ALDL_DEF_BIT("Malf Code 45", 14, 5, "O2 Sensor Rich", ""), /* MALFFLG3 B5 */
+	ALDL_DEF_BIT("Malf Code 44", 14, 6, "O2 Sensor Lean", ""), /* MALFFLG3 B6 */
+	ALDL_DEF_BIT("Malf Code 43", 14, 7, "ESC", ""), /* MALFFLG3 B7 */
 	ALDL_DEF_END,
-};
-/* ADCOOL (table), MW2, MALFFLG1, MALFFLG2, MALFFLG3, MWAF1, MCU2IO (all bitmasks!) */
-
-aldl_definition aldl_DF = { .mask = "DF", 
-			    .name = "91-93 3.4 DOHC LQ1 ($DF)",
-			    .mode1_request = {0xF4, 0x57, 0x01, 0x00, 0xB4},
-			    .mode1_request_length = 5, 
-			    .mode1_response_length = 67,
-			    .mode1_data_length = 63,
-			    .mode1_data_offset = 3,
-			    .mode1_def = aldl_DF_mode1,
-			    .mode8_request = {0xF4, 0x56, 0x08, 0xAE},
-			    .mode8_request_length = 4,
-			    .mode9_request = {0xF4, 0x56, 0x09, 0xAD},
-			    .mode9_request_length = 4,
-			    .basic_baudrate = B9600,
-			    .ideal_baudrate = 8192,
 };
 
 aldl_definition aldl_9A = { .mask = "9A",
