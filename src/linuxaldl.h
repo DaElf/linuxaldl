@@ -120,7 +120,7 @@ typedef struct _linuxaldl_definition {
 									// message is the 4th byte onward, this should be 3. (1+3 = 4)
 
 	byte_def_t* mode1_def; // pointer to start of table of byte_def_t structs.
-							// the last element must be LINUXALDL_MODE1_END_DEF
+			       // the last element must be LINUXALDL_MODE1_END_DEF
 
 	char mode8_request[__MAX_REQUEST_SIZE];  // the mode 8 (silence) request message, incl checksum
 	unsigned int mode8_request_length;  // the length of the mode 8 message incl checksum
@@ -141,31 +141,32 @@ typedef struct _linuxaldl_settings
 {
 	/* Configuration fields */
 	const char* aldlportname; // path to aldl interface port
-	const char* logfilename; 	// filename for the log file
-	const char* aldldefname; // name for the ALDL definition to be used
+	const char* logfilename;  // filename for the log file
+	const char* aldldefname;  // name for the ALDL definition to be used
 
 	unsigned int scan_interval; // msec between scan requests
 	unsigned int scan_timeout; // msec to timeout on scan request.
-				// note that read-sequence takes timeout in usec.				// usec = msec*1000
+				// note that read-sequence takes timeout in usec.
+				// usec = msec*1000
 
 	/* Data definitions */
 	aldl_definition** aldl_definition_table; // array of pointers to data definitions. (see linuxaldl_definitions.h)
 	
 	/* Runtime stuff */
-	int faldl; 			// aldl serial interface file descriptor
+	int customrate;         // 1 if we are using accurate datarate.
+	int faldl; 		// aldl serial interface file descriptor
 	int flogfile; 		// file descriptor for log file
-	int scanning; // 1 when the timer has been set for making scans, otherwise 0.
+	int scanning; 		// 1 when the timer has been set for making scans, otherwise 0.
 	aldl_definition* definition; // see linuxaldl_definitions.h
 
 	char* data_set_raw;	// the current/most recent set of data from a mode1 message.
 				// this is allocated when a definition is selected
 
-	char** data_set_strings;	// pointer to array of data set in string format.
-					// allocated when a definition is selected in the GUI
+	char** data_set_strings;// pointer to array of data set in string format.
+				// allocated when a definition is selected in the GUI
 
-	float* data_set_floats;		// data set in float format
-					// allocated when a definition is selected in the GUI
-
+	float* data_set_floats;	// data set in float format
+				// allocated when a definition is selected in the GUI
 } linuxaldl_settings;
 
 // function prototypes

@@ -255,7 +255,7 @@ aldl_definition aldl_9A = { .mask = "9A",
 			    .mode1_data_offset = 1,
 			    .mode1_def = aldl_9A_mode1,
 			    .basic_baudrate = B4800,
-			    .ideal_baudrate = 160,
+			    .ideal_baudrate = 1600,   /* ie basic baud rate / 3 */
 };
 
 /* Definition table */

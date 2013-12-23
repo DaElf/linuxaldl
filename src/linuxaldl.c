@@ -114,9 +114,9 @@ int main(int argc, const char* argv[]){
 	}
 	poptFreeContext(popt_aldl); // free the popt context
 
-	// ========================================================================
-	// 							CONNECT / VERIFY ALDL INTERFACE 
-	// ========================================================================
+	// =======================================================
+	// 	CONNECT / VERIFY ALDL INTERFACE 
+	// =======================================================
 
 	// Establish a connection to the aldl
 	// ===================================
@@ -131,16 +131,27 @@ int main(int argc, const char* argv[]){
 		return -1;
 	}
 
-	// set the custom baud rate:
-	// the ALDL interface operates at 8192. it would be preferable to get as close to this
-	// baud rate as possible. if it cannot be set; it should still work at the standard
-	// baud rate of 9600; the framing errors aren't excessive enough to cause problems,
-	// and will be caught by bad checksums.
+	/* Set custom baud rate:
+	   ALDL has two variants; 
+	     1) 160 baud with non-RS232 framing.  Clock up to 1600 baud
+	        and take one byte from each bit to get us the 8 data bits
+		plus one start and one stop bit.
+	     2) 8192 baud with RS232 framing.
+
+	   Prefer to set exact baud rate if possible, but they are non-standard
+	   PC datarates..
+
+	   8192 should work at 9600; the packets are short enough that framing
+	   errors should be minimal and checksums will catch them anyway.
+	*/
+
+	aldl_settings.customrate = 1;
 	if (set_custom_baud_rate(aldl_settings.faldl, aldl_settings.definition->ideal_baudrate)!=0) {
 		fprintf(stderr," Couldn't set baud rate to %d. Using standard rate (%d).\n",
 			aldl_settings.definition->ideal_baudrate,
 			aldl_settings.definition->basic_baudrate);
 		fprintf(stderr," There may be framing errors.\n");
+		aldl_settings.customrate = 0;
 	}
 	
 	// verify the aldl
@@ -175,9 +186,9 @@ int main(int argc, const char* argv[]){
 	}
 
 
-	// ========================================================================
-	// 				CLEANUP (FLUSH SERIAL LINE, CLOSE PORT) 
-	// ========================================================================
+	// ============================================================
+	// 		CLEANUP (FLUSH SERIAL LINE, CLOSE PORT) 
+	// ============================================================
 
 	// discard any unwritten data
 	tcflush(aldl_settings.faldl, TCIOFLUSH);
@@ -253,7 +264,7 @@ int send_aldl_message(char* msg_buf, unsigned int size)
 // so that mode 8 isn't even required.
 int get_mode1_message(char* inbuffer, unsigned int size)
 {
-	int res;
+	int res = 0;
 	char outbuffer[__MAX_REQUEST_SIZE]; // max request size defined in linuxaldl_definitions.h
 
 	aldl_definition* def = aldl_settings.definition;
@@ -287,6 +298,7 @@ int get_mode1_message(char* inbuffer, unsigned int size)
 				  seq, 3, 0, 
 				  aldl_settings.scan_timeout*1000);
 	} else {
+		/* Wait for Framing START ? */
 		// XXX what sequence to match for 160baud rate?
 	}
 
