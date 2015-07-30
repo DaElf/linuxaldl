@@ -1,4 +1,3 @@
-
 /*(C) copyright 2008, Steven Snyder, All Rights Reserved
 
 Steven T. Snyder, <stsnyder@ucla.edu> http://www.steventsnyder.com
@@ -37,9 +36,9 @@ LICENSING INFORMATION:
 // global variables
 // =================================================
 
-linuxaldl_settings aldl_settings = { NULL, 0, NULL, 1, 0, 
-				     NULL, NULL, aldl_definition_table, 
-				     NULL, NULL, NULL, 
+linuxaldl_settings aldl_settings = { NULL, 0, NULL, 1, 0,
+				     NULL, NULL, aldl_definition_table,
+				     NULL, NULL, NULL,
 				     .scan_interval = 1000,
 				     .scan_timeout = 1000
 };
@@ -47,7 +46,7 @@ linuxaldl_settings aldl_settings = { NULL, 0, NULL, 1, 0,
 // ============================================================================
 //
 //                                      linuxaldl
-//                                       main ()                                                                                                                 
+//                                       main ()
 //
 // ============================================================================
 
@@ -59,7 +58,7 @@ main(int argc, const char *argv[])
 	int guimode = 0;
 
 	// ========================================================================
-	//                      COMMAND LINE OPTION PARSING 
+	//                      COMMAND LINE OPTION PARSING
 	// ========================================================================
 
 	poptContext popt_aldl;
@@ -125,7 +124,7 @@ main(int argc, const char *argv[])
 	poptFreeContext(popt_aldl);	// free the popt context
 
 	// ========================================================================
-	//                                                      CONNECT / VERIFY ALDL INTERFACE 
+	//                                                      CONNECT / VERIFY ALDL INTERFACE
 	// ========================================================================
 
 	// Establish a connection to the aldl
@@ -160,9 +159,9 @@ main(int argc, const char *argv[])
 		close(aldl_settings.faldl);
 		return -1;
 	}
-	// GUI mode if no .log file specified at the command line 
+	// GUI mode if no .log file specified at the command line
 	// ========================================================================
-	//                                                      LOAD GUI MODE 
+	//                                                      LOAD GUI MODE
 	// ========================================================================
 	if (guimode) {
 		// GUI mode
@@ -198,7 +197,7 @@ main(int argc, const char *argv[])
 	}
 
 	// ========================================================================
-	//                              CLEANUP (FLUSH SERIAL LINE, CLOSE PORT) 
+	//                              CLEANUP (FLUSH SERIAL LINE, CLOSE PORT)
 	// ========================================================================
 
 	// discard any unwritten data
@@ -212,7 +211,7 @@ main(int argc, const char *argv[])
 
 // ============================================================
 //
-//                      linuxaldl general function definitions 
+//                      linuxaldl general function definitions
 //
 // ============================================================
 // (mostly used for the command line interface but also main())
@@ -266,7 +265,7 @@ send_aldl_message(char *msg_buf, unsigned int size)
 }
 
 // requests a mode1 message from the ECM using the currently loaded
-// aldl definition. 
+// aldl definition.
 // returns the number of bytes received, if the message was complete.
 //  0 is no response/timeout/partial message
 // -1 is returned if the checksum is bad.
@@ -308,13 +307,13 @@ get_mode1_message(char *inbuffer, unsigned int size)
 #endif
 #if 0
 	send_aldl_message(def->mode1_request,
-			  def->mode1_request_length); 
+			  def->mode1_request_length);
 #endif
 
 	// wait for response from ECM
 	// read sequence, 50msec timeout
 	res = read_sequence(aldl_settings.faldl, inbuffer, mode1_len,
-			  seq, 3, 0, 
+			  seq, 3, 0,
 			  aldl_settings.scan_timeout*1000);
 
 	printf("%s read_sequence returned %d\n", __func__, res);
@@ -351,7 +350,7 @@ get_mode1_message(char *inbuffer, unsigned int size)
 // reads up to len bytes into inbuffer from the interface.
 // listens for a maximum of timeout seconds.
 // returns -1 on failure, 0 on timeout with no bytes received,
-// and otherwise returns the number of bytes received 
+// and otherwise returns the number of bytes received
 int
 aldl_listen_raw(char *inbuffer, unsigned int len, int timeout)
 {
@@ -382,7 +381,7 @@ get_checksum(char *buffer, unsigned int len)
 	return acc;
 }
 
-// looks up def_name in the aldl_definition_table until it finds the first 
+// looks up def_name in the aldl_definition_table until it finds the first
 // definition in the table with the name def_name
 // if the definition is not in the table, returns NULL
 aldl_definition *
@@ -416,6 +415,7 @@ aldl_update_sets(int flags)
 	byte_def_t *cur_def;
 	float converted_val;
 	char *new_data_string = NULL;
+	int byte;
 
 	while (defs[i].label != NULL)	// while not at the last defined byte
 	{
@@ -427,22 +427,27 @@ aldl_update_sets(int flags)
 		}
 		// convert the raw data to a float based on the byte definition
 		if (cur_def->bits == 8) {
+			if (cur_def->byte_offset > 0)
+				byte = cur_def->byte_offset;
+			else
+				byte = cur_def->byte_offset - 1;
 			converted_val =
-			    aldl_raw8_to_float(aldl_settings.data_set_raw
-					       [cur_def->byte_offset - 1],
+			    aldl_raw8_to_float(aldl_settings.data_set_raw[byte],
 					       cur_def->operation,
 					       cur_def->op_factor,
 					       cur_def->op_offset);
 
 		} else if (cur_def->bits == 16) {
+			if (cur_def->byte_offset > 0)
+				byte = cur_def->byte_offset;
+			else
+				byte = cur_def->byte_offset - 1;
 			converted_val =
-			    aldl_raw16_to_float(aldl_settings.data_set_raw
-						[cur_def->byte_offset - 1],
-						aldl_settings.data_set_raw
-						[cur_def->byte_offset],
-						cur_def->operation,
-						cur_def->op_factor,
-						cur_def->op_offset);
+				aldl_raw16_to_float(aldl_settings.data_set_raw[byte],
+						    aldl_settings.data_set_raw[cur_def->byte_offset],
+						    cur_def->operation,
+						    cur_def->op_factor,
+						    cur_def->op_offset);
 		} else {	// other numbers of bits not supported
 			i++;
 			continue;

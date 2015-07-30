@@ -73,8 +73,7 @@ static gboolean hide_on_delete(GtkWidget * widget, GdkEvent * event,
 //    SCAN OPERATION FOR GUI MODE
 // ===================================
 
-static void linuxaldl_gui_scan_interval_changed(GtkAdjustment * adj,
-						gpointer data);
+//static void linuxaldl_gui_scan_interval_changed(GtkAdjustment * adj, gpointer data);
 // callback for change in the adjustment for the aldl_settings.scan_interval field.
 // if scanning is not taking place, does nothing except store the new values and enforce
 // timeout/ scan interval constraints (interval must be at least 20msec more than timeout).
@@ -85,14 +84,14 @@ gint linuxaldl_gui_scan_on_interval(gpointer data);
 // callback for gtk_timeout interval timer. if aldl_settings.scanning == 1 
 // then this function will call linuxaldl_gui_scan
 
-static void linuxaldl_gui_scan_toggle(GtkWidget * widget, gpointer data);
+//static void linuxaldl_gui_scan_toggle(GtkWidget * widget, gpointer data);
 // starts/stops scanning. output is written to the log file if one was specified
 // otherwise it is written to stdout.
 
-static void linuxaldl_gui_scan(GtkWidget * widget, gpointer data);
+//static void linuxaldl_gui_scan(GtkWidget * widget, gpointer data);
 // performs a single scan operation (one mode1 message, updates/logs data)
 
-static void linuxaldl_gui_stop(GtkWidget * widget, gpointer data);
+//static void linuxaldl_gui_stop(GtkWidget * widget, gpointer data);
 // stops scanning. this causes aldl_scan_and_log to return.
 
 // ==========================================================================

@@ -39,6 +39,8 @@ extern linuxaldl_settings aldl_settings;
 linuxaldl_gui_settings aldl_gui_settings =
     { NULL, {0, 0}, ALDL_LOG_RAW, NULL, 0 };
 
+static void linuxaldl_gui_scan_toggle(GtkWidget *, gpointer);
+static void linuxaldl_gui_scan(GtkWidget *, gpointer, int);
 // ========================================================================
 //
 //                                      GUI MODE FUNCTION DEFINITIONS
@@ -356,7 +358,7 @@ linuxaldl_gui_scan_on_interval(gpointer data)
 		return 0; 
 	}
 	//printf("%s skip scan for now\n", __func__);
-	linuxaldl_gui_scan(NULL, NULL);	// perform a scan operation
+	linuxaldl_gui_scan(NULL, NULL, 0);	// perform a scan operation
 	return 1;
 }
 
@@ -375,7 +377,7 @@ linux_aldl_start_chatter(void)
 // perform a single scan operation: attempt to get one mode1 message,
 // save the data to the log and update the current data array
 static void
-linuxaldl_gui_scan(GtkWidget * widget, gpointer data)
+linuxaldl_gui_scan(GtkWidget * widget, gpointer data, int start_chatter)
 {
 	int res;
 	char *inbuffer;
@@ -391,8 +393,9 @@ linuxaldl_gui_scan(GtkWidget * widget, gpointer data)
 			  aldl_settings.definition->mode8_request_length);
 	tcflush(aldl_settings.faldl, TCIOFLUSH);	// flush send and receive buffers
 #endif
-
-	linux_aldl_start_chatter();
+	
+	if (start_chatter)
+		linux_aldl_start_chatter();
 	// request a mode 1 message
 	res = get_mode1_message(inbuffer, buf_size);
 #ifdef _LINXUALDL_DEBUG
@@ -494,7 +497,7 @@ linuxaldl_gui_scan_toggle(GtkWidget * widget, gpointer data)
 					  linuxaldl_gui_scan_on_interval, NULL);
 			aldl_settings.scanning = 1;
 			printf("%s do one scan\n", __func__);
-			linuxaldl_gui_scan(NULL, NULL);	// perform initial scan
+			linuxaldl_gui_scan(NULL, NULL, 1 /*start chatter*/);	// perform initial scan
 		}
 	} else {
 		// button is up (turned off)

@@ -108,16 +108,21 @@ aldl_definition aldl_DF = {
 	.mode9_request_length = 4
 };
 
+
+#include "boat.h"
+
 aldl_definition aldl_mefi2 = {
 	.name = "mefi2",
 	.mode1_request = {0xF4, 0x57, 0x01, 0x00, 0xB4},
 	.mode1_request_length = 5,
-	.mode1_response_length = 41,
-	.mode1_data_length = 37,
+	.mode1_response_length = 65,
+	.mode1_data_length = 61,
 	.mode1_data_offset = 3,
-	.mode1_def = aldl_DF_mode1,
+	.mode1_def = aldl_DF_boat,
+	/* stop chatter */
 	.mode8_request = {0xF4, 0x56, 0x08, 0xAE},
 	.mode8_request_length = 4,
+	/* start chatter */
 	.mode9_request = {0xF4, 0x56, 0x09, 0xAD},
 	.mode9_request_length = 4,
 };

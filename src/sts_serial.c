@@ -47,7 +47,7 @@ int serial_connect(const char *portpath, int flags, speed_t baudrate);
 // the flags field is the same as the flags for a call to read()
 
 int set_custom_baud_rate(int fport, unsigned int desired_baudrate);
-// Attempts to set the baud rate to the closest rate possible to 
+// Attempts to set the baud rate to the closest rate possible to
 // the desired_baudrate argument using divisors.
 // fport is the file descriptor for the port opened by a call to serial_connect() or open()
 // Divisor method:
@@ -65,13 +65,13 @@ int set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate);
 // Termios custom baud rate method:
 //   tty_ioctl.c has to be compiled into the kernel with BOTHER defined for this to work.
 //   This is called through set_custom_baud_rate() if a call to ioctl() fails
-//       ... assuming BOTHER is defined. 
+//       ... assuming BOTHER is defined.
 
 int readwithtimeout(int fd, void *buf, size_t count, int secs);
 // readwithtimeout - read from a file descriptor with timeout
 // description:
 //  mimics read() but with a timeout that resets whenever a byte is received.
-//  attempts to read up to count bytes from file descriptor fd into 
+//  attempts to read up to count bytes from file descriptor fd into
 //  the buffer starting at buf. continues to read bytes until count bytes
 //  have been read or no data has been received for secs seconds.
 // return value:
@@ -105,7 +105,7 @@ unsigned int convert_baudrate(speed_t baudrate);
 
 void fprinthex(FILE * stream, char *seq, unsigned int len);
 // print hex sequence of len bytes from char array seq.
-// converts the numerical value of each byte in seq to a 
+// converts the numerical value of each byte in seq to a
 // hex character string and prints it to stream.
 // hexadecimal bytes are each seperated by spaces.
 // there is no trailing space.
@@ -119,7 +119,7 @@ void int_to_hexstr(int val, char *buf, unsigned int len);
 // readwithtimeout - read from a file descriptor with timeout
 // description:
 //  mimics read() but with a timeout that resets whenever a byte is received.
-//  attempts to read up to count bytes from file descriptor fd into 
+//  attempts to read up to count bytes from file descriptor fd into
 //  the buffer starting at buf. continues to read bytes until count bytes
 //  have been read or no data has been received for secs seconds.
 // return value:
@@ -227,7 +227,7 @@ read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
 				//printf("Waiting for %lu bytes\n", count - bytes_read);
 				res = read(fd, buf+bytes_read, count-bytes_read);
 				if (res > 0) {
-					fprintf(stdout, "Read0 bytes %d bytes_read %u\t", res,
+					fprintf(stdout, "Read  I bytes %d bytes_read %u\t", res,
 						bytes_read);
 					fprinthex(stdout, buf+bytes_read, res);
 					fprintf(stdout, "\n");
@@ -249,7 +249,7 @@ read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
 			// if the sequence hasn't been matched...
 			res = read(fd, seqbuf, seqbuf_size);
 			if (res > 0) {
-				fprintf(stdout, "Read1 bytes %d\t", res);
+				fprintf(stdout, "Read II bytes %d\t", res);
 				fprinthex(stdout, seqbuf, res);
 				fprintf(stdout, "\n");
 			}
@@ -271,23 +271,21 @@ read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
 						break;
 					// if the byte matches the next byte of the sequence to match,
 					// or the sequence has been matched and there are bytes left in the buffer
-					else if (seqbuf[i] == seq[seq_matched]
-						 || (seq_matched == seq_size)) {
+					else if (seqbuf[i] == seq[seq_matched] ||
+						 (seq_matched == seq_size)) {
 						// copy the byte into the buffer
-						((char *)buf)[bytes_read] =
-						    ((char *)seqbuf)[i];
+						((char *)buf)[bytes_read] = ((char *)seqbuf)[i];
 						bytes_read++;	// increment the number of bytes written to buf
-						if (seq_matched < seq_size) {
+						if (seq_matched < seq_size)
 							seq_matched++;	// increment the number of seq bytes matched
-						}
-					} else	// otherwise the sequence didn't match...
-					{
+					} else	{
+						// otherwise the sequence didn't match...
 						// .. reset the counts
 						seq_matched = 0;
 						bytes_read = 0;
 					}
 				}
-		}		// if the sequence hasn't been matched...
+		} // if the sequence hasn't been matched...
 	}
 	// disable the timeout alarm
 	if (secs > 0 || usecs > 0) {
@@ -303,7 +301,7 @@ read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
 		return bytes_read;
 }
 
-// Attempts to set the baud rate to the closest rate possible to 
+// Attempts to set the baud rate to the closest rate possible to
 // the desired_baudrate argument using divisors.
 // fport is the file descriptor for the port opened by a call to serial_connect() or open()
 // Divisor method:
@@ -406,7 +404,7 @@ set_custom_baud_rate(int fport, unsigned int desired_baudrate)
 // Termios custom baud rate method:
 //   tty_ioctl.c has to be compiled into the kernel with BOTHER defined for this to work.
 //   This is called through set_custom_baud_rate() if a call to ioctl() fails
-//       ... assuming BOTHER is defined. 
+//       ... assuming BOTHER is defined.
 // XXX this is an untested function (my architecture doesn't have BOTHER defined)
 int
 set_custom_baud_rate_no_ioctl(int fport, unsigned int desired_baudrate)
@@ -592,7 +590,7 @@ convert_baudrate(speed_t baudrate)
 }
 
 // print hex sequence of len bytes from char array seq.
-// converts the numerical value of each byte in seq to a 
+// converts the numerical value of each byte in seq to a
 // hex character string and prints it to stream.
 // hexadecimal bytes are each seperated by spaces.
 // there is no trailing space.
