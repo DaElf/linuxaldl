@@ -24,6 +24,7 @@ LICENSING INFORMATION:
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/signal.h>
+#include <termios.h>
 #include <fcntl.h>
 #include <popt.h> // for command line parsing
 #include <gtk/gtk.h>
@@ -38,7 +39,49 @@ LICENSING INFORMATION:
 // global variables
 // =================================================
 
-linuxaldl_settings aldl_settings = { NULL, 0, NULL, 1, 0, NULL, NULL, aldl_definition_table, NULL, NULL, NULL, 150, 100 };
+linuxaldl_settings aldl_settings = {
+	NULL, 0, NULL, 1, 0, NULL, NULL, aldl_definition_table, NULL, NULL, NULL, .scan_interval = 1000, .scan_timeout = 1000
+};
+
+int
+linuxaldl_load_definition(const char *name)
+{
+	if (name != NULL) {
+		// Free this?
+		aldl_settings.aldldefname = strdup(name);
+		fprintf(stderr, "%s:%d name %s", __func__, __LINE__, aldl_settings.aldldefname);
+	} else {
+		return -1;
+	}
+
+	// get the aldl definition address
+	aldl_settings.definition = aldl_get_definition(aldl_settings.aldldefname);
+
+	// if no definition by that name exists, definition will be NULL
+	if (aldl_settings.definition == NULL) {
+		printf("No definition with name \"%s\" found.\n", aldl_settings.aldldefname);
+		return 0;
+	}
+	g_print("Definition \"%s\" selected:\n", aldl_settings.definition->name);
+	g_print(" Mode 1 message has %d data bytes.\n", aldl_settings.definition->mode1_data_length);
+
+	// allocate memory for the raw data array and zero it out
+	aldl_settings.data_set_raw = g_malloc0(aldl_settings.definition->mode1_data_length);
+	// allocate memory for the float array
+	aldl_settings.data_set_floats = g_malloc0(aldl_settings.definition->mode1_data_length * sizeof(float));
+	// allocate memory for the string pointers array
+	aldl_settings.data_set_strings = g_malloc0(aldl_settings.definition->mode1_data_length * sizeof(char *));
+
+	// if the log format is already set to CSV but we are just now loading a definition,
+	// then the labels were not ready when we started. write the header line now.
+#if 0
+	if (aldl_gui_settings.log_format == ALDL_LOG_CSV) {
+		linuxaldl_gui_write_csv_header();
+	}
+#endif
+
+	return 0;
+}
 
 // ============================================================================
 //
@@ -89,20 +132,23 @@ main(int argc, const char *argv[])
 	// if no log file specified or no definition file specified
 	if ((aldl_settings.logfilename == NULL || !(poptPeekArg(popt_aldl) == NULL || aldl_settings.aldldefname == NULL))) {
 		guimode = 1;
-	} else // in command line mode, choose definition using the -mask=DEF argument
-	{
+	} else {
+		// in command line mode, choose definition using the -mask=DEF argument
 		// XXX suggestion: how about adding support for pre-selecting the definition at the command line?
 		// get the aldl definition address
 		aldl_settings.definition = aldl_get_definition(aldl_settings.aldldefname);
 
 		// if no definition by that name exists, exit
 		if (aldl_settings.definition == NULL) {
-			fprintf(stderr, "Error: No definition with name \"%s\" found.", aldl_settings.aldldefname);
-			fprintf(stderr, "Consult the documentation.\n");
-			fprintf(stderr, " Note: definition names are case sensitive.\n");
+			fprintf(stderr,
+				"Error: No definition with name \"%s\" found."
+				"Consult the documentation.\n"
+				" Note: definition names are case sensitive.\n",
+				aldl_settings.aldldefname);
 			return -1;
 		}
 	}
+	linuxaldl_load_definition("mefi2");
 	poptFreeContext(popt_aldl); // free the popt context
 
 	// ========================================================================
@@ -114,12 +160,11 @@ main(int argc, const char *argv[])
 	printf("Trying to connect to ALDL interface on %s...\n", aldl_settings.aldlportname);
 
 	// connect to the device and set the serial port settings
-	aldl_settings.faldl = serial_connect(aldl_settings.aldlportname, O_RDWR | O_NOCTTY | O_NONBLOCK, BAUDRATE);
+	aldl_settings.faldl = serial_connect(aldl_settings.aldlportname, O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if (aldl_settings.faldl == -1) {
 		fprintf(stderr, " Couldn't open to %s\n", aldl_settings.aldlportname);
 		return -1;
 	}
-
 	// set the custom baud rate:
 	// the ALDL interface operates at 8192. it would be preferable to get as close to this
 	// baud rate as possible. if it cannot be set; it should still work at the standard
@@ -129,15 +174,13 @@ main(int argc, const char *argv[])
 		fprintf(stderr, " Couldn't set baud rate to 8192. Using standard rate (9600).\n");
 		fprintf(stderr, " There may be framing errors.\n");
 	}
-
 	// verify the aldl
 	if (verifyaldl() < 0) {
 		fprintf(stderr, " ALDL verification failure. No response from ECM.\n");
-		tcflush(aldl_settings.faldl, TCIOFLUSH);
+		//tcflush(aldl_settings.faldl, TCIOFLUSH);
 		close(aldl_settings.faldl);
 		return -1;
 	}
-
 	// GUI mode if no .log file specified at the command line
 	// ========================================================================
 	// 							LOAD GUI MODE
@@ -146,7 +189,6 @@ main(int argc, const char *argv[])
 		// GUI mode
 		linuxaldl_gui(argc, (char **)argv);
 	}
-
 	// ========================================================================
 	// 						COMMAND LINE MODE
 	// ========================================================================
@@ -175,7 +217,7 @@ main(int argc, const char *argv[])
 	// ========================================================================
 
 	// discard any unwritten data
-	tcflush(aldl_settings.faldl, TCIOFLUSH);
+	//tcflush(aldl_settings.faldl, TCIOFLUSH);
 
 	// close the port
 	close(aldl_settings.faldl);
@@ -194,10 +236,39 @@ main(int argc, const char *argv[])
 // This function should check that the aldl interface is working by listening
 // for ECM chatter, or some other operation to determine whether there is
 // a line connected to the serial port.
+
 int
-verifyaldl()
+shutup(void)
 {
-	//XXX NOT IMPLEMENTED
+	u_char inbuffer[128];
+	int res;
+	int i;
+	int len;
+
+	if (!aldl_settings.definition) {
+		fprintf(stderr, "aldl definition not set");
+		return -1;
+	}
+
+	len = aldl_settings.definition->mode8_request_length;
+
+	memset(inbuffer, 0, 128);
+
+	for (i = 0; i < 10; i++) {
+		tcflush(aldl_settings.faldl, TCIOFLUSH); // flush send and receive buffers
+		send_aldl_message(aldl_settings.definition->mode8_request, len);
+		usleep(1000);
+		res = readwithtimeout(aldl_settings.faldl, inbuffer, len, 5);
+		fprintf(stderr, "%s:%d res %d\n", __func__, __LINE__, res);
+		fprinthex(stderr, inbuffer, 7);
+	}
+	return 0;
+}
+
+int
+verifyaldl(void)
+{
+	//return shutup();
 	return 0;
 }
 
@@ -217,7 +288,7 @@ aldl_scan_and_log(int fd)
 // current aldl definition.
 // returns 0 on success.
 int
-send_aldl_message(char *msg_buf, unsigned int size)
+send_aldl_message(u_char *msg_buf, unsigned int size)
 {
 	int res;
 
@@ -232,7 +303,8 @@ send_aldl_message(char *msg_buf, unsigned int size)
 		return -1;
 	else if ((unsigned)res < size)
 		return -1;
-	tcdrain(aldl_settings.faldl);
+	if (tcdrain(aldl_settings.faldl) < 0)
+		perror("tcdrain");
 
 	return res;
 }
@@ -247,57 +319,65 @@ send_aldl_message(char *msg_buf, unsigned int size)
 // implementation should wait for a mode 1 message header in the response,
 // so that mode 8 isn't even required.
 int
-get_mode1_message(char *inbuffer, unsigned int size)
+get_mode1_message(u_char *inbuffer, unsigned int size)
 {
 	int res;
 	char checkval;
-	char outbuffer[__MAX_REQUEST_SIZE]; // max request size defined in linuxaldl_definitions.h
+	u_char outbuffer[__MAX_REQUEST_SIZE]; // max request size defined in linuxaldl_definitions.h
 
 	aldl_definition *def = aldl_settings.definition;
-	unsigned int mode1_len = def->mode1_response_length;
+	unsigned int mode1_len = def->mode1_data_length + def->mode1_request_length;
+	//unsigned int mode1_len = def->mode1_response_length;
 
 	if (size < mode1_len) {
 		printf("Read buffer must be at least %d bytes.\n", mode1_len);
 		return -1;
 	}
-
 	// put the mode 1 request message and checksum in the output buffer
 	memcpy(outbuffer, def->mode1_request, def->mode1_request_length - 1);
 	outbuffer[def->mode1_request_length - 1] = get_checksum(outbuffer, def->mode1_request_length - 1);
 
 	// form the response message start sequence
-	char seq[] = { def->mode1_request[0], 0x52 + def->mode1_response_length, 0x01 };
+	//char seq[] = { def->mode1_request[0], 0x52+def->mode1_response_length, 0x01};
+	//u_char seq[] = { 0xF0, 0x56, 0xF4, 0xC6 };
+	//u_char seq[] = { 0xF4, 0x93, 0x01 };
+	u_char seq[] = { 0xF4, 0x57, 0x01, 0x00 };
 
-	// flush the serial receive buffer
-	tcflush(aldl_settings.faldl, TCIFLUSH);
-
-	// write the request to the serial interface
-	write(aldl_settings.faldl, &outbuffer, def->mode1_request_length);
-
-	// wait for the bytes to be written
-	tcdrain(aldl_settings.faldl);
+	send_aldl_message(def->mode1_request, def->mode1_request_length);
 
 	// wait for response from ECM
 	// read sequence, 50msec timeout
-	res = read_sequence(aldl_settings.faldl, inbuffer, mode1_len, seq, 3, 0, aldl_settings.scan_timeout * 1000);
+	//res = read_sequence(aldl_settings.faldl, inbuffer, mode1_len, seq, 3, 0, aldl_settings.scan_timeout*1000);
+
+#if 0
+  if(tcflush(aldl_settings.faldl, TCIFLUSH) < 0 )
+    perror("tcflush failed");
+#endif
+	res = readwithtimeout(aldl_settings.faldl, inbuffer, mode1_len, 1);
+
+	printf("%s read_sequence returned %d\n", __func__, res);
+	fprinthex(stdout, inbuffer, res);
 
 	if (res < 0) {
 		fprintf(stderr, "Error receiving mode1 message: %s\n", strerror(errno));
 		return -1;
 	}
 	if ((unsigned)res < mode1_len) {
-#ifdef _LINUXALDL_DEBUG
 		fprintf(stderr, "MODE1 timeout occured. (Received %d/%d bytes)\n", res, mode1_len);
-#endif
 		return 0;
 	}
 
-	char checksum = get_checksum(inbuffer, mode1_len - 1);
+#if 1
+	u_char checksum = get_checksum(inbuffer, mode1_len - 1);
 	if (inbuffer[mode1_len - 1] != checksum) {
-		fprintf(stderr, "MODE 1 bad checksum.\n");
-		return -1;
+		fprintf(stderr, "MODE 1 bad checksum.\t");
+		fprinthex(stderr, &inbuffer[mode1_len - 1], 1);
+		fprintf(stderr, "\t");
+		fprinthex(stderr, &checksum, 1);
+		fprintf(stderr, "\n");
+		//return -1;
 	}
-
+#endif
 	return res;
 }
 
@@ -306,7 +386,7 @@ get_mode1_message(char *inbuffer, unsigned int size)
 // returns -1 on failure, 0 on timeout with no bytes received,
 // and otherwise returns the number of bytes received
 int
-aldl_listen_raw(char *inbuffer, unsigned int len, int timeout)
+aldl_listen_raw(u_char *inbuffer, unsigned int len, int timeout)
 {
 	int res;
 	res = readwithtimeout(aldl_settings.faldl, inbuffer, len, timeout);
@@ -316,10 +396,10 @@ aldl_listen_raw(char *inbuffer, unsigned int len, int timeout)
 // calculates the single-byte checksum, summing from the start of buffer
 // through len bytes. the checksum is calculated by adding each byte
 // together and ignoring overflow, then taking the two's complement and adding 1
-char
-get_checksum(char *buffer, unsigned int len)
+u_char
+get_checksum(u_char *buffer, unsigned int len)
 {
-	char acc = 0x00;
+	u_char acc = 0x00;
 
 	unsigned int i;
 	for (i = 0; i < len; i++) {
@@ -346,6 +426,7 @@ aldl_get_definition(const char *defname)
 	if (defname == NULL)
 		return NULL;
 	while (result != NULL) {
+		printf("%s %s\n", defname, result->name);
 		if (strcmp(defname, result->name) == 0)
 			break;
 		index++;
@@ -369,6 +450,7 @@ aldl_update_sets(int flags)
 	byte_def_t *cur_def;
 	float converted_val;
 	char *new_data_string = NULL;
+	int byte;
 
 	while (defs[i].label != NULL) // while not at the last defined byte
 	{
@@ -378,16 +460,23 @@ aldl_update_sets(int flags)
 			i++;
 			continue;
 		}
-
 		// convert the raw data to a float based on the byte definition
 		if (cur_def->bits == 8) {
-			converted_val = aldl_raw8_to_float(aldl_settings.data_set_raw[cur_def->byte_offset - 1], cur_def->operation,
-							   cur_def->op_factor, cur_def->op_offset);
+			if (cur_def->byte_offset > 0)
+				byte = cur_def->byte_offset;
+			else
+				byte = cur_def->byte_offset - 1;
+			converted_val = aldl_raw8_to_float(aldl_settings.data_set_raw[byte], cur_def->operation, cur_def->op_factor,
+							   cur_def->op_offset);
 
 		} else if (cur_def->bits == 16) {
-			converted_val = aldl_raw16_to_float(aldl_settings.data_set_raw[cur_def->byte_offset - 1],
-							    aldl_settings.data_set_raw[cur_def->byte_offset], cur_def->operation,
-							    cur_def->op_factor, cur_def->op_offset);
+			if (cur_def->byte_offset > 0)
+				byte = cur_def->byte_offset;
+			else
+				byte = cur_def->byte_offset - 1;
+			converted_val =
+				aldl_raw16_to_float(aldl_settings.data_set_raw[byte], aldl_settings.data_set_raw[cur_def->byte_offset],
+						    cur_def->operation, cur_def->op_factor, cur_def->op_offset);
 		} else { // other numbers of bits not supported
 			i++;
 			continue;
@@ -403,14 +492,15 @@ aldl_update_sets(int flags)
 			snprintf(new_data_string, 10, "%.1f", converted_val); // convert the floating point value to a string
 
 			// if there is currently a string registered, free it
-			if (aldl_settings.data_set_strings[i] != NULL)
+			if (aldl_settings.data_set_strings[i] != NULL) {
 				free(aldl_settings.data_set_strings[i]);
+				aldl_settings.data_set_strings[i] = NULL;
+			}
 
 			// register the new string in the table
 			aldl_settings.data_set_strings[i] = new_data_string;
 		}
-
-		//fprintf(stderr,"Updating element %s\n",cur_def->label);
+		fprintf(stderr, "Updating element %s data %s\n", cur_def->label, new_data_string);
 		i++;
 	}
 }
