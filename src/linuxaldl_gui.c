@@ -41,6 +41,7 @@ linuxaldl_gui_settings aldl_gui_settings =
 
 static void linuxaldl_gui_scan_toggle(GtkWidget *, gpointer);
 static void linuxaldl_gui_scan(GtkWidget *, gpointer, int);
+static void aldl_gui_shutup(GtkWidget *, gpointer);
 // ========================================================================
 //
 //                                      GUI MODE FUNCTION DEFINITIONS
@@ -147,13 +148,12 @@ linuxaldl_gui(int argc, char *argv[])
 	// ========================================================================
 	datareadoutw = linuxaldl_gui_datareadout_new();
 
-	// Commands buttons (scan, stop, options, quit)
+	// Commands buttons (shutup, scan, stop, options, quit)
 	// ========================================================================
 
 	// button box for commands
 	bbox_cmds = gtk_hbutton_box_new();
-	gtk_button_box_set_layout(GTK_BUTTON_BOX(bbox_cmds),
-				  GTK_BUTTONBOX_SPREAD);
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(bbox_cmds), GTK_BUTTONBOX_SPREAD);
 	gtk_widget_show(bbox_cmds);
 
 	// frame for commands
@@ -161,26 +161,27 @@ linuxaldl_gui(int argc, char *argv[])
 	gtk_container_add(GTK_CONTAINER(frame_cmds), bbox_cmds);
 	gtk_widget_show(frame_cmds);
 
+  // shutup button
+  button = gtk_toggle_button_new_with_label("shutup");
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(aldl_gui_shutup), (gpointer) & aldl_settings);
+	gtk_container_add(GTK_CONTAINER(bbox_cmds), button);
+	gtk_widget_show(button);
+
 	// scan button
-	button = gtk_toggle_button_new_with_label("Scan");
-	g_signal_connect(G_OBJECT(button), "toggled",
-			 G_CALLBACK(linuxaldl_gui_scan_toggle),
-			 (gpointer) & aldl_settings);
+	button = gtk_toggle_button_new_with_label("Scany");
+	g_signal_connect(G_OBJECT(button), "toggled", G_CALLBACK(linuxaldl_gui_scan_toggle), (gpointer) & aldl_settings);
 	gtk_container_add(GTK_CONTAINER(bbox_cmds), button);
 	gtk_widget_show(button);
 
 	// options button
 	button = gtk_button_new_with_label("Options");
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(linuxaldl_gui_widgetshow),
-			 (gpointer) optionsw);
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(linuxaldl_gui_widgetshow), (gpointer) optionsw);
 	gtk_container_add(GTK_CONTAINER(bbox_cmds), button);
 	gtk_widget_show(button);
 
 	// exit button
 	button = gtk_button_new_with_label("Quit");
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(linuxaldl_gui_quit), NULL);
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(linuxaldl_gui_quit), NULL);
 	gtk_container_add(GTK_CONTAINER(bbox_cmds), button);
 	gtk_widget_show(button);
 
@@ -192,8 +193,7 @@ linuxaldl_gui(int argc, char *argv[])
 	gtk_widget_show(vbox_settings);
 
 	// add vbox to top of settings area 
-	gtk_box_pack_start(GTK_BOX(vbox_settings), bbox_settings_top, FALSE,
-			   FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox_settings), bbox_settings_top, FALSE, FALSE, 0);
 	gtk_widget_show(bbox_settings_top);
 
 	// -------------------------------------------------------------------------
@@ -314,6 +314,8 @@ linuxaldl_gui_scan_interval_changed(GtkAdjustment * adj, gpointer data)
 	if (new_interval <= aldl_settings.scan_timeout + 19) {
 		new_interval = 20 + aldl_settings.scan_timeout;
 		gtk_adjustment_set_value(GTK_ADJUSTMENT(adj), new_interval);
+
+
 	}
 
 	aldl_settings.scan_interval = new_interval;
@@ -344,7 +346,7 @@ linuxaldl_gui_scan_timeout_changed(GtkAdjustment * adj, gpointer data)
 	aldl_settings.scan_timeout = new_timeout;
 }
 
-// callback for g_timeout interval timer. if aldl_settings.scanning == 1 
+// callback for g_timeout interval timer. if aldl_settings.scanning == 1
 // then this function will call linuxaldl_gui_scan
 gint
 linuxaldl_gui_scan_on_interval(gpointer data)
@@ -366,12 +368,25 @@ static void
 linux_aldl_start_chatter(void)
 {
 	// send a mode 8 message to silence the ecm
-	send_aldl_message(aldl_settings.definition->mode8_request,
-			  aldl_settings.definition->mode8_request_length);
-	tcflush(aldl_settings.faldl,TCIOFLUSH); // flush send and receive buffers
-	
-	send_aldl_message(aldl_settings.definition->mode1_request,
-			  aldl_settings.definition->mode1_request_length); 
+        u_char inbuffer[128];
+        int res;
+        send_aldl_message(aldl_settings.definition->mode8_request,
+                          aldl_settings.definition->mode8_request_length);
+        //tcflush(aldl_settings.faldl,TCIOFLUSH); // flush send and receive buffers
+        res = readwithtimeout(aldl_settings.faldl, inbuffer, aldl_settings.definition->mode8_request_length, 1);
+        fprintf(stderr,"%s:%d\n", __func__, __LINE__);
+        fprinthex(stderr, inbuffer, aldl_settings.definition->mode8_request_length);
+        usleep(1000);
+
+        send_aldl_message(aldl_settings.definition->mode1_request,
+                          aldl_settings.definition->mode1_request_length);
+}
+
+void
+start_mode1(void)
+{
+        printf("%s:%d", __func__, __LINE__);
+        send_aldl_message(aldl_settings.definition->mode1_request, aldl_settings.definition->mode1_request_length);
 }
 
 // perform a single scan operation: attempt to get one mode1 message,
@@ -380,11 +395,13 @@ static void
 linuxaldl_gui_scan(GtkWidget * widget, gpointer data, int start_chatter)
 {
 	int res;
-	char *inbuffer;
-	unsigned int buf_size;
-	buf_size = aldl_settings.definition->mode1_response_length;
+	u_char *inbuffer;
+	unsigned int buf_size = 512;
+
+  //buf_size = aldl_settings.definition->mode1_response_length;
 
 	inbuffer = g_malloc(buf_size);
+  memset(inbuffer, 0 , buf_size);
 
 #if 0	
 	// send a mode 8 message to silence the ecm
@@ -392,22 +409,45 @@ linuxaldl_gui_scan(GtkWidget * widget, gpointer data, int start_chatter)
 	send_aldl_message(aldl_settings.definition->mode8_request,
 			  aldl_settings.definition->mode8_request_length);
 	tcflush(aldl_settings.faldl, TCIOFLUSH);	// flush send and receive buffers
+        usleep(1000);
+        /*
+        res = read(aldl_settings.faldl, inbuffer, 3);
+        if (res > 0) {
+          fprintf(stderr, "%s:%d: res %d\t", __func__, __LINE__, res);
+          fprinthex(stderr, inbuffer, 3);
+        } else {
+          fprintf(stderr, "%s:%d: res %d\n", __func__, __LINE__, res);
+        }
+        */
 #endif
-	
+
+        //	if (start_chatter)
+        //shutup();
+
+  //start_mode1();
+#if 0
 	if (start_chatter)
 		linux_aldl_start_chatter();
+#endif
 	// request a mode 1 message
 	res = get_mode1_message(inbuffer, buf_size);
-#ifdef _LINXUALDL_DEBUG
+  fprintf(stderr, "%s:%d: res %d ", __func__, __LINE__, res);
+
+#if 1
 	if (res == -1) {
 		// bad checksum
-		fprintf(stderr, "c");
+		fprintf(stderr, "bad checksum\n");
+    //return res;
 	} else if (res == 0) {
 		// timeout/partial response
-		fprintf(stderr, "t");
+		fprintf(stderr, "timeout\n");
+    //return res;
 	}
 #endif
 
+
+#if 0
+  /*  fix this to be valid on checksum only */
 	if (res > 0) {
 #ifdef _LINXUALDL_DEBUG
 		// got full mode1 message
@@ -418,8 +458,7 @@ linuxaldl_gui_scan(GtkWidget * widget, gpointer data, int start_chatter)
 
 		// check to see if a data set for the display has been allocated
 		if (aldl_settings.data_set_raw == NULL) {
-			g_warning
-			    ("Data set labels not initialized. Display and .csv log files will not be updated. \n");
+			g_warning ("Data set labels not initialized. Display and .csv log files will not be updated. \n");
 		} else {
 			// copy the data to the current data set
 			memcpy(aldl_settings.data_set_raw,
@@ -428,8 +467,7 @@ linuxaldl_gui_scan(GtkWidget * widget, gpointer data, int start_chatter)
 			       aldl_settings.definition->mode1_data_length);
 
 			// update string and float representations
-			aldl_update_sets(ALDL_UPDATE_FLOATS |
-					 ALDL_UPDATE_STRINGS);
+			aldl_update_sets(ALDL_UPDATE_FLOATS | ALDL_UPDATE_STRINGS);
 
 			// update the Data Readout
 			linuxaldl_gui_datareadout_update(NULL, NULL);
@@ -468,10 +506,28 @@ linuxaldl_gui_scan(GtkWidget * widget, gpointer data, int start_chatter)
 			else if (aldl_gui_settings.log_format == ALDL_LOG_CSV)
 				linuxaldl_gui_write_csv_line();
 		}
-
 	}
+#endif
+
 	g_free(inbuffer);
 	return;
+}
+
+static void
+aldl_gui_shutup(GtkWidget *widget, gpointer data)
+{
+  int ret;
+
+  if (aldl_settings.definition == NULL) {
+    g_print ("shutup aborted -- No definition file selected.\n");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
+    return;
+  }
+
+  ret = shutup();
+  fprintf(stderr, "%s:%d shutup returned %d\n", __func__, __LINE__, ret);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
+  return;
 }
 
 // this function is called when the scan button is toggled
@@ -484,17 +540,13 @@ linuxaldl_gui_scan_toggle(GtkWidget * widget, gpointer data)
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
 		// abort if no definition file selected, and toggle the button to off
 		if (aldl_settings.definition == NULL) {
-			g_print
-			    ("Scan aborted -- No definition file selected.\n");
-			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget),
-						     FALSE);
+			g_print ("Scan aborted -- No definition file selected.\n");
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), FALSE);
 			return;
 		}
 		if (aldl_settings.scanning == 0) {
 			g_print("Starting scan.\n");
-			aldl_gui_settings.scanning_tag =
-			    g_timeout_add(aldl_settings.scan_interval,
-					  linuxaldl_gui_scan_on_interval, NULL);
+			aldl_gui_settings.scanning_tag = g_timeout_add(aldl_settings.scan_interval, linuxaldl_gui_scan_on_interval, NULL);
 			aldl_settings.scanning = 1;
 			printf("%s do one scan\n", __func__);
 			linuxaldl_gui_scan(NULL, NULL, 1 /*start chatter*/);	// perform initial scan
@@ -839,7 +891,7 @@ linuxaldl_gui_datareadout_show(GtkWidget * widget, gpointer data)
 	GtkWidget *cur_vbox;
 	GtkWidget *cur_frame;
 	GtkWidget *cur_label;
-	GtkWidget *cur_table;
+	GtkWidget *cur_table = NULL;
 
 	// until at the end of the items in the definition
 	for (i = 0; def[i].label != NULL; i++) {
@@ -966,10 +1018,7 @@ linuxaldl_gui_choosedef_new()
 		if (i != 0)
 			g_print(", ");
 		g_print("%s", aldl_settings.aldl_definition_table[i]->name);
-		deflist =
-		    g_list_append(deflist,
-				  (gpointer)
-				  aldl_settings.aldl_definition_table[i]->name);
+		deflist = g_list_append(deflist, (gpointer) aldl_settings.aldl_definition_table[i]->name);
 		i++;
 	}
 	if (i == 0)
@@ -994,26 +1043,19 @@ linuxaldl_gui_choosedef_new()
 
 	// "cancel" button
 	button = gtk_button_new_with_label("Cancel");
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(linuxaldl_gui_widgethide),
-			 (gpointer) defwindow);
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(linuxaldl_gui_widgethide), (gpointer) defwindow);
 	gtk_container_add(GTK_CONTAINER(bbox), button);
 	gtk_widget_show(button);
 
 	// "select" button
 	button = gtk_button_new_with_label("Select");
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(linuxaldl_gui_widgethide),
-			 (gpointer) defwindow);
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(linuxaldl_gui_load_definition),
-			 GTK_ENTRY(GTK_COMBO(dropdown)->entry));
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(linuxaldl_gui_widgethide), (gpointer) defwindow);
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(linuxaldl_gui_load_definition), GTK_ENTRY(GTK_COMBO(dropdown)->entry));
 	gtk_container_add(GTK_CONTAINER(bbox), button);
 	gtk_widget_show(button);
 
 	// stop the window from being destroyed when the X is clicked at the top right
-	g_signal_connect(G_OBJECT(defwindow), "delete_event",
-			 G_CALLBACK(hide_on_delete), NULL);
+	g_signal_connect(G_OBJECT(defwindow), "delete_event", G_CALLBACK(hide_on_delete), NULL);
 
 	return defwindow;
 }

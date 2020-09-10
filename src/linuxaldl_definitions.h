@@ -115,8 +115,8 @@ aldl_definition aldl_mefi2 = {
 	.name = "mefi2",
 	.mode1_request = {0xF4, 0x57, 0x01, 0x00, 0xB4},
 	.mode1_request_length = 5,
-	.mode1_response_length = 65,
-	.mode1_data_length = 61,
+	.mode1_response_length = 70,
+	.mode1_data_length = 65,
 	.mode1_data_offset = 3,
 	.mode1_def = aldl_DF_boat,
 	/* stop chatter */

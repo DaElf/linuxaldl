@@ -20,14 +20,15 @@ LICENSING INFORMATION:
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <termios.h>
+//#include <asm/termios.h>
+//#include <asm/termbits.h>
 #include <sys/types.h>
 #include <fcntl.h>
 
 // serial helper function prototypes
 // ====================================================
 
-int serial_connect(const char *portpath, int flags, speed_t baudrate);
+int serial_connect(const char *portpath, int flags);
 // attempts to connect to a serial device at portpath (i.e. "/dev/ttyUSB0")
 // sets raw mode and sets the baud rate to baudrate. (see `man termios`)
 // returns the file descriptor for the connection, or -1 if an error occurs.
@@ -72,8 +73,7 @@ void read_sequence_timeout(int signalno);
 //read_sequence_timeout()
 // handles the SIGALRM signal
 
-int read_sequence(int fd, void *buf, size_t count, char *seq, size_t seq_size,
-		  long secs, long usecs);
+int read_sequence(int fd, void *buf, size_t count, u_char *seq, size_t seq_size, long secs, long usecs);
 // read_sequence is used to wait for a specific byte/character, ignoring other sequences
 // that arrive on the device. it stops when a timeout occurs or the buffer is filled.
 // detailed behavior:
@@ -90,7 +90,7 @@ unsigned int convert_baudrate(speed_t baudrate);
 // returns the speed_t baudrate defined in <termios.h> in unsigned integer format
 // e.g. convert_baudrate(B57600) returns 57600
 
-void fprinthex(FILE * stream, char *seq, unsigned int seq_len);
+void fprinthex(FILE *, unsigned char *, int);
 // print hex sequence of len bytes from char array seq.
 // converts the numerical value of each byte in seq to a 
 // hex character string and prints it to stream.
